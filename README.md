@@ -44,8 +44,10 @@ Example:
 
 ## Data Sources
 
-1. GCP: Data is based on the public "GPU regions and zones" documentation. Availability is zone-granular.
-2. AWS: Data is based on the "Amazon EC2 instance types by Region" documentation. Availability is region-granular.
+1. GCP: [GPU regions and zones](https://cloud.google.com/compute/docs/gpus/gpu-regions-zones). Availability is zone-granular.
+2. AWS: [Amazon EC2 instance types by Region](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-regions.html). Availability is region-granular.
 3. Azure: todo
 
-!!Note: Coordinates represent the approximate center of the region or its reference city as listed in the official documentation. Data was last updated August 2025.
+> [!NOTE]
+> Coordinates represent the approximate center of the region or its reference city as listed in the official documentation.
+> Data was last updated August 2025.
