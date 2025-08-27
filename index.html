@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cloud Accelerator Proximity Map</title>
+    <!--
+        Data sources:
+        - GCP: "GPU regions and zones" (last updated 2025‑08‑13 UTC)
+        - AWS: "Amazon EC2 instance types by Region" (canonical per‑region availability)
+        Notes: GCP is zone‑granular; AWS is region‑granular. Coordinates represent the region’s reference city from the docs.
+    -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- MarkerCluster plugin for handling overlapping markers -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        #map { height: 100vh; width: 100%; background-color: #f0f2f5; }
+        .info-panel {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: white;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            z-index: 1000;
+            width: 450px;
+            max-width: calc(100vw - 2rem);
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
+            transition: transform .3s ease-in-out, opacity .3s ease-in-out;
+        }
+        .legend {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            background: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0,0,0,.1);
+        }
+        .gpu-info { font-size: .8rem; color: #666; margin-left: 10px; }
+        #gpu-type option { padding: 4px; }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+        .chip { display:inline-block; font-size:.75rem; line-height:1; padding:.35rem .5rem; border-radius:9999px; border-width:1px; margin:.15rem .25rem .15rem 0; }
+        .chip-gcp { background:#DBEAFE; color:#1E3A8A; border-color:#BFDBFE; }
+        .chip-aws { background:#FEF3C7; color:#92400E; border-color:#FDE68A; }
+        .cat-head { display:flex; align-items:center; justify-content:space-between; }
+        /* Custom styles for provider toggle */
+        .provider-toggle-label {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            border: 1px solid #D1D5DB;
+            transition: all 0.2s ease-in-out;
+            font-weight: 500;
+        }
+        .provider-toggle-label:hover {
+            background-color: #F3F4F6;
+        }
+        input[name="provider"]:checked + .provider-toggle-label {
+            background-color: #111827;
+            color: white;
+            border-color: #111827;
+        }
+        /* Custom scrollbar */
+        .info-panel::-webkit-scrollbar { width: 8px; }
+        .info-panel::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .info-panel::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+        .info-panel::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Custom marker cluster styles */
+        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+            background-color: rgba(255, 255, 255, 0.85);
+        }
+        .gcp-cluster-icon {
+            background-color: rgba(59, 130, 246, 0.7);
+            border: 2px solid #1E40AF;
+        }
+        .aws-cluster-icon {
+            background-color: rgba(245, 158, 11, 0.7);
+            border: 2px solid #92400E;
+        }
+        .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+            background-color: rgba(240, 242, 245, 0.85);
+            color: #333;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="map"></div>
+
+    <div class="info-panel">
+        <div id="panel-header" class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800">Accelerator Proximity</h2>
+            <button id="toggle-panel-btn" class="p-1 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" aria-label="Collapse panel">
+                <!-- SVG icon is managed by JavaScript -->
+            </button>
+        </div>
+        <div id="panel-content">
+            <!-- Cloud Provider Filter -->
+            <div class="mb-5">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Cloud Provider</label>
+                <div id="provider-radios" class="flex flex-wrap gap-2">
+                    <input type="radio" name="provider" value="all" id="provider-all" class="sr-only" checked>
+                    <label for="provider-all" class="provider-toggle-label">All</label>
+
+                    <input type="radio" name="provider" value="gcp" id="provider-gcp" class="sr-only">
+                    <label for="provider-gcp" class="provider-toggle-label">GCP</label>
+
+                    <input type="radio" name="provider" value="aws" id="provider-aws" class="sr-only">
+                    <label for="provider-aws" class="provider-toggle-label">AWS</label>
+                </div>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Accelerator Categories</label>
+                <p class="text-xs text-gray-500 mb-3">Filter by common NVIDIA GPU generations. Badges show cloud availability: <span class="chip chip-gcp">GCP</span> <span class="chip chip-aws">AWS</span>.</p>
+                <div id="category-filter" class="space-y-3"></div>
+            </div>
+
+            <!-- Advanced raw type multiselect -->
+            <details class="mb-4">
+                <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                    Advanced: Filter by Raw Type
+                </summary>
+                <div class="mt-2">
+                    <select id="gpu-type" multiple class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md h-40"></select>
+                    <p class="text-xs text-gray-500 mt-2">Hold Cmd/Ctrl to select multiple. Selections here are combined with the category filters above.</p>
+                </div>
+            </details>
+
+            <hr class="my-4">
+
+            <!-- Custom Locations Input -->
+            <details class="mb-4" open>
+                <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                    Your Locations (Data Centers)
+                </summary>
+                <div class="mt-2">
+                    <div class="flex items-center mb-1">
+                        <label for="dc-json-input" class="block text-xs text-gray-600">Paste your locations as a JSON object below.</label>
+                        <div class="relative flex flex-col items-center group ml-2">
+                            <svg xmlns="http://www.w.org/2000/svg" class="h-4 w-4 text-gray-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div class="absolute bottom-0 flex-col items-center hidden mb-5 w-64 group-hover:flex">
+                                <div class="relative z-10 p-3 text-xs leading-none text-white bg-gray-800 shadow-lg rounded-md">
+                                    <h4 class="font-bold mb-1 text-gray-200">Expected JSON format:</h4>
+                                    <p class="text-gray-300 mb-2">An object where keys are location names and values are objects with `lat` and `lng` properties.</p>
+                                    <pre class="text-left text-xs bg-gray-900 p-2 rounded"><code>{
+  "Amsterdam, NL": {
+    "lat": 52.36,
+    "lng": 4.90
+  },
+  "San Jose, US": {
+    "lat": 37.33,
+    "lng": -121.88
+  }
+}</code></pre>
+                                </div>
+                                <div class="w-3 h-3 -mt-2 rotate-45 bg-gray-800"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea id="dc-json-input" rows="6" class="block w-full text-xs mono border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 rounded-md shadow-sm"></textarea>
+                    <div class="flex justify-between items-center mt-2">
+                        <p id="json-status" class="text-xs text-gray-500"></p>
+                        <button id="update-dcs-btn" class="bg-indigo-600 text-white text-sm font-medium py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Update Map</button>
+                    </div>
+                </div>
+            </details>
+
+            <hr class="my-4">
+
+            <!-- Results Section -->
+            <div id="results" class="text-sm">
+                <div id="results-placeholder" class="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                      <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">Select a Location</h3>
+                    <p class="mt-1 text-sm text-gray-500">Click a green marker on the map to find the nearest cloud regions.</p>
+                </div>
+                <div id="results-content" class="hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="legend">
+        <h4 class="font-bold text-sm text-gray-800 mb-1">Legend</h4>
+        <div class="flex items-center text-xs"><span class="inline-block w-3 h-3 rounded-full mr-2 border-2 border-green-600"></span> Your Location</div>
+        <div class="flex items-center text-xs"><span class="inline-block w-3 h-3 bg-blue-500 rounded-full mr-2 border border-gray-400"></span> GCP Region</div>
+        <div class="flex items-center text-xs"><span class="inline-block w-3 h-3 bg-yellow-500 rounded-full mr-2 border border-gray-400"></span> AWS Region</div>
+        <div class="flex items-center text-xs mt-1"><span class="inline-block w-3 h-3 mr-2">⚠️</span> <span class="text-gray-600">Points in the same location are slightly offset for visibility</span></div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const gcpData = [ { region: "asia-east1", location: "Changhua County, Taiwan", lat: 24.051, lng: 120.516, zones: { "A3 Mega": ["asia-east1-c"], "A3 High": ["asia-east1-c"], "G2": ["asia-east1-a","asia-east1-b","asia-east1-c"], "N1+T4": ["asia-east1-a","asia-east1-c"], "N1+V100": ["asia-east1-c"], "N1+P100": ["asia-east1-a","asia-east1-c"] }}, { region: "asia-east2", location: "Hong Kong", lat: 22.3193, lng: 114.1694, zones: { "N1+T4": ["asia-east2-a","asia-east2-c"] }}, { region: "asia-northeast1", location: "Tokyo, Japan", lat: 35.6895, lng: 139.6917, zones: { "A2 Standard": ["asia-northeast1-a","asia-northeast1-c"], "A3 Edge": ["asia-northeast1-b"], "A3 Mega": ["asia-northeast1-b"], "A3 High": ["asia-northeast1-b"], "G2": ["asia-northeast1-a","asia-northeast1-b","asia-northeast1-c"], "N1+T4": ["asia-northeast1-a","asia-northeast1-c"] }}, { region: "asia-northeast2", location: "Osaka, Japan", lat: 34.6937, lng: 135.5023, zones: { } }, { region: "asia-northeast3", location: "Seoul, South Korea", lat: 37.5665, lng: 126.9780, zones: { "A3 Edge": ["asia-northeast3-a","asia-northeast3-c"], "A2 Standard": ["asia-northeast3-a","asia-northeast3-b"], "G2": ["asia-northeast3-a","asia-northeast3-b"], "N1+T4": ["asia-northeast3-b","asia-northeast3-c"] }}, { region: "asia-south1", location: "Mumbai, India", lat: 19.0760, lng: 72.8777, zones: { "A3 Ultra": ["asia-south1-b"], "A3 Edge": ["asia-south1-c"], "G2": ["asia-south1-a","asia-south1-b","asia-south1-c"], "N1+T4": ["asia-south1-a","asia-south1-b"] }}, { region: "asia-south2", location: "Delhi, India", lat: 28.6139, lng: 77.2090, zones: { "A3 Ultra": ["asia-south2-c"] }}, { region: "asia-southeast1", location: "Jurong West, Singapore", lat: 1.3496, lng: 103.7072, zones: { "A3 Mega": ["asia-southeast1-b","asia-southeast1-c"], "A3 High": ["asia-southeast1-b","asia-southeast1-c"], "A3 Edge": ["asia-southeast1-b","asia-southeast1-c"], "A2 Ultra": ["asia-southeast1-c"], "A2 Standard": ["asia-southeast1-b","asia-southeast1-c"], "G2": ["asia-southeast1-a","asia-southeast1-b","asia-southeast1-c"], "N1+T4": ["asia-southeast1-a","asia-southeast1-b","asia-southeast1-c"], "N1+P4": ["asia-southeast1-b","asia-southeast1-c"] }}, { region: "asia-southeast2", location: "Jakarta, Indonesia", lat: -6.2088, lng: 106.8456, zones: { "N1+T4": ["asia-southeast2-b"] }}, { region: "australia-southeast1", location: "Sydney, Australia", lat: -33.8688, lng: 151.2093, zones: { "A3 Mega": ["australia-southeast1-c"], "N1+T4": ["australia-southeast1-a","australia-southeast1-c"], "N1+P4": ["australia-southeast1-a","australia-southeast1-b"], "N1+P100": ["australia-southeast1-c"] }}, { region: "australia-southeast2", location: "Melbourne, Australia", lat: -37.8136, lng: 144.9631, zones: { }}, { region: "europe-west1", location: "St. Ghislain, Belgium", lat: 50.445, lng: 3.82, zones: { "A3 Ultra": ["europe-west1-b"], "A3 Mega": ["europe-west1-b","europe-west1-c"], "A3 High": ["europe-west1-b","europe-west1-c"], "G2": ["europe-west1-b","europe-west1-c"], "N1+T4": ["europe-west1-b","europe-west1-c","europe-west1-d"], "N1+P100": ["europe-west1-b","europe-west1-d"] }}, { region: "europe-west2", location: "London, England", lat: 51.5074, lng: -0.1278, zones: { "A3 Edge": ["europe-west2-b"], "G2": ["europe-west2-a","europe-west2-b"], "N1+T4": ["europe-west2-a","europe-west2-b"] }}, { region: "europe-west3", location: "Frankfurt, Germany", lat: 50.1109, lng: 8.6821, zones: { "A3 High": ["europe-west3-c"], "A3 Edge": ["europe-west3-a","europe-west3-c"], "G2": ["europe-west3-a","europe-west3-b"], "N1+T4": ["europe-west3-b"] }}, { region: "europe-west4", location: "Eemshaven, Netherlands", lat: 53.442, lng: 6.83, zones: { "A3 Ultra": ["europe-west4-a"], "A3 Mega": ["europe-west4-b","europe-west4-c"], "A3 High": ["europe-west4-c"], "A3 Edge": ["europe-west4-b","europe-west4-c"], "A2 Ultra": ["europe-west4-a","europe-west4-b","europe-west4-c"], "A2 Standard": ["europe-west4-a","europe-west4-b"], "G2": ["europe-west4-a","europe-west4-b","europe-west4-c"], "N1+T4": ["europe-west4-a","europe-west4-b","europe-west4-c"], "N1+P4": ["europe-west4-b","europe-west4-c"], "N1+V100": ["europe-west4-a","europe-west4-b","europe-west4-c"], "N1+P100": ["europe-west4-a"] }}, { region: "europe-west6", location: "Zurich, Switzerland", lat: 47.3769, lng: 8.5417, zones: { "G2": ["europe-west6-b","europe-west6-c"] }}, { region: "europe-west9", location: "Paris, France", lat: 48.8566, lng: 2.3522, zones: { "A3 Edge": ["europe-west9-c"] }}, { region: "europe-central2", location: "Warsaw, Poland", lat: 52.2297, lng: 21.0122, zones: { "N1+T4": ["europe-central2-c"] }}, { region: "northamerica-northeast1", location: "Montréal, Québec, Canada", lat: 45.5017, lng: -73.5673, zones: { "N1+P4": ["northamerica-northeast1-a","northamerica-northeast1-b","northamerica-northeast1-c"], "N1+T4": ["northamerica-northeast1-c"] }}, { region: "northamerica-northeast2", location: "Toronto, Ontario, Canada", lat: 43.6532, lng: -79.3832, zones: { "G2": ["northamerica-northeast2-a","northamerica-northeast2-b"], "A3 Edge": ["northamerica-northeast2-c"] }}, { region: "us-central1", location: "Council Bluffs, Iowa, USA", lat: 41.2619, lng: -95.8608, zones: { "A4X": ["us-central1-a"], "A4": ["us-central1-b"], "A3 Ultra": ["us-central1-b"], "A3 Mega": ["us-central1-a","us-central1-b","us-central1-c"], "A3 High": ["us-central1-a","us-central1-c"], "A3 Edge": ["us-central1-a","us-central1-b","us-central1-c"], "A2 Ultra": ["us-central1-a","us-central1-c"], "A2 Standard": ["us-central1-a","us-central1-b","us-central1-c","us-central1-f"], "G4": ["us-central1-b"], "G2": ["us-central1-a","us-central1-b","us-central1-c"], "N1+T4": ["us-central1-a","us-central1-b","us-central1-c","us-central1-f"], "N1+P4": ["us-central1-a","us-central1-c"], "N1+V100": ["us-central1-a","us-central1-b","us-central1-c","us-central1-f"], "N1+P100": ["us-central1-c","us-central1-f"] }}, { region: "us-east1", location: "Moncks Corner, South Carolina, USA", lat: 33.1950, lng: -80.0130, zones: { "A3 Ultra": ["us-east1-d"], "A2 Standard": ["us-east1-b"], "G2": ["us-east1-b","us-east1-c","us-east1-d"], "N1+T4": ["us-east1-c","us-east1-d"], "N1+V100": ["us-east1-c"], "N1+P100": ["us-east1-b","us-east1-c"] }}, { region: "us-east4", location: "Ashburn, Virginia, USA", lat: 39.0438, lng: -77.4874, zones: { "A3 Ultra": ["us-east4-b"], "A3 Mega": ["us-east4-a","us-east4-b","us-east4-c"], "A3 High": ["us-east4-a","us-east4-b"], "A3 Edge": ["us-east4-a","us-east4-b","us-east4-c"], "A2 Ultra": ["us-east4-c"], "G2": ["us-east4-a","us-east4-c"], "N1+T4": ["us-east4-a","us-east4-b","us-east4-c"], "N1+P4": ["us-east4-a","us-east4-b","us-east4-c"] }}, { region: "us-east5", location: "Columbus, Ohio, USA", lat: 39.9612, lng: -82.9988, zones: { "A3 Ultra": ["us-east5-a"], "A3 Mega": ["us-east5-a"], "A3 High": ["us-east5-a"], "A3 Edge": ["us-east5-a"], "A2 Ultra": ["us-east5-b"] }}, { region: "us-west1", location: "The Dalles, Oregon, USA", lat: 45.5946, lng: -121.1787, zones: { "A3 Ultra": ["us-west1-c"], "A3 Mega": ["us-west1-a","us-west1-b"], "A3 High": ["us-west1-a","us-west1-b"], "A3 Edge": ["us-west1-a","us-west1-b"], "A2 Standard": ["us-west1-b"], "G2": ["us-west1-a","us-west1-b","us-west1-c"], "N1+T4": ["us-west1-a","us-west1-b"], "N1+V100": ["us-west1-a","us-west1-b"], "N1+P100": ["us-west1-a","us-west1-b"] }}, { region: "us-west2", location: "Los Angeles, California, USA", lat: 34.0522, lng: -118.2437, zones: { "N1+T4": ["us-west2-c"], "N1+P4": ["us-west2-c"] }}, { region: "us-west3", location: "Salt Lake City, Utah, USA", lat: 40.7608, lng: -111.8910, zones: { "A2 Standard": ["us-west3-b"], "N1+T4": ["us-west3-b"] }}, { region: "us-west4", location: "Las Vegas, Nevada, USA", lat: 36.1699, lng: -115.1398, zones: { "A3 Mega": ["us-west4-a"], "A3 High": ["us-west4-a"], "A3 Edge": ["us-west4-a"], "A2 Standard": ["us-west4-b"], "G2": ["us-west4-c"], "N1+T4": ["us-west4-a","us-west4-b"] }}, { region: "us-south1", location: "Dallas, Texas, USA", lat: 32.7767, lng: -96.7970, zones: { "A3 Ultra": ["us-south1-b"] }} ];
+        const awsData = [ { region: "us-east-1", location: "US East (N. Virginia) — Ashburn, VA", lat: 39.0438, lng: -77.4874, families: ["DL1","F1","F2","G4ad","G4dn","G5","G5g","G6","G6e","G6f","Gr6","Gr6f","Inf1","Inf2","P3","P3dn","P4d","P4de","P5","P5en","P6-B200","P6e-GB200","Trn1","Trn1n","VT1"] }, { region: "us-east-2", location: "US East (Ohio) — Columbus, OH", lat: 39.9612, lng: -82.9988, families: ["G4ad","G4dn","G5","G6","G6e","G6f","Gr6","Gr6f","Inf1","Inf2","P3","P4d","P5","P5e","P5en","P6-B200","Trn1","Trn1n","Trn2"] }, { region: "us-west-1", location: "US West (N. California) — Bay Area", lat: 37.8272, lng: -122.2913, families: ["G4dn","Inf1","P5","P5en"] }, { region: "us-west-2", location: "US West (Oregon)", lat: 45.5152, lng: -122.6784, families: ["DL1","DL2q","F1","F2","G4ad","G4dn","G5","G5g","G6","G6e","G6f","Gr6","Gr6f","Inf1","Inf2","P3","P3dn","P4d","P4de","P5","P5e","P5en","P6-B200","Trn1","Trn1n","VT1"] }, { region: "ap-east-1", location: "Asia Pacific (Hong Kong)", lat: 22.3193, lng: 114.1694, families: ["G4dn","Inf1"] }, { region: "ap-south-1", location: "Asia Pacific (Mumbai)", lat: 19.0760, lng: 72.8777, families: ["G4dn","G5","Inf1","Inf2","P4d","P5","Trn1","G6"] }, { region: "ap-northeast-2", location: "Asia Pacific (Seoul)", lat: 37.5665, lng: 126.9780, families: ["G4dn","G5","G5g","Inf1","Inf2","P3","P4d","G6"] }, { region: "ap-southeast-1", location: "Asia Pacific (Singapore)", lat: 1.3521, lng: 103.8198, families: ["G4dn","G5g","Inf1","Inf2","P3","P4de"] }, { region: "ap-southeast-2", location: "Asia Pacific (Sydney)", lat: -33.8688, lng: 151.2093, families: ["F1","G4dn","G5","Inf1","Inf2","P3","P4d","P5","Trn1","G6"] }, { region: "ap-northeast-1", location: "Asia Pacific (Tokyo)", lat: 35.6895, lng: 139.6917, families: ["G4ad","G4dn","G5","G5g","Inf1","Inf2","P3","P3dn","P4d","P4de","P5","VT1","G6"] }, { region: "ca-central-1", location: "Canada (Central) — Montréal, QC", lat: 45.5017, lng: -73.5673, families: ["G4ad","G4dn","G5","G6","G6f","Gr6","Gr6f","Inf1","P3","P4d","P5"] }, { region: "eu-central-1", location: "Europe (Frankfurt)", lat: 50.1109, lng: 8.6821, families: ["DL2q","F1","G4ad","G4dn","G5","G5g","G6","G6e","G6f","Gr6","Gr6f","Inf1","Inf2","P3","P4d","P4de"] }, { region: "eu-west-1", location: "Europe (Ireland)", lat: 53.3498, lng: -6.2603, families: ["F1","G4ad","G4dn","G5","Inf1","Inf2","P3","P3dn","P4d","VT1"] }, { region: "eu-west-2", location: "Europe (London)", lat: 51.5074, lng: -0.1278, families: ["F1","F2","G4ad","G4dn","G5","G6","G6f","Gr6","Gr6f","Inf1","Inf2","P3","P5","P5e"] }, { region: "eu-south-1", location: "Europe (Milan)", lat: 45.4642, lng: 9.1900, families: ["G4dn","Inf1"] }, { region: "eu-west-3", location: "Europe (Paris)", lat: 48.8566, lng: 2.3522, families: ["G4dn","Inf1","Inf2","G6"] }, { region: "eu-north-1", location: "Europe (Stockholm)", lat: 59.3293, lng: 18.0686, families: ["G4dn","G5","Inf1","Inf2","P5","G6","G6e"] }, { region: "me-south-1", location: "Middle East (Bahrain)", lat: 26.2235, lng: 50.5876, families: ["G4dn","Inf1"] }, { region: "sa-east-1", location: "South America (São Paulo)", lat: -23.5505, lng: -46.6333, families: ["G4dn","G5","Inf1","Inf2","P4d","P5","G6"] } ];
+        const gpuDescriptions = { "A4X": "NVIDIA GB200 Grace Blackwell Superchips", "A4": "NVIDIA B200 Blackwell GPUs", "A3 Ultra": "NVIDIA H200 SXM GPUs", "A3 Mega": "NVIDIA H100 SXM GPUs", "A3 High": "NVIDIA H100 SXM GPUs", "A3 Edge": "NVIDIA H100 SXM GPUs", "A2 Ultra": "NVIDIA A100 80GB GPUs", "A2 Standard": "NVIDIA A100 40GB GPUs", "G4": "RTX 6000 (Blackwell Server Edition)", "G2": "NVIDIA L4", "N1+T4": "NVIDIA T4 (attached to N1)", "N1+V100": "NVIDIA V100 (attached to N1)", "N1+P100": "NVIDIA P100 (attached to N1)", "N1+P4": "NVIDIA P4 (attached to N1)", "P6e-GB200": "NVIDIA GB200 NVL72 (preview / selective regions)", "P6-B200": "NVIDIA Blackwell B200", "P5": "NVIDIA H100", "P5e": "NVIDIA H200", "P5en": "NVIDIA H200 (enhanced network)", "P4d": "NVIDIA A100 40GB", "P4de": "NVIDIA A100 80GB", "P3": "NVIDIA V100", "P3dn": "NVIDIA V100 (100Gbps network)", "G6e": "NVIDIA L40S (graphics/inference)", "G6": "NVIDIA L4 (graphics/inference)", "G6f": "NVIDIA L4 (variant)", "G5": "NVIDIA A10G (graphics/inference)", "G5g": "NVIDIA T4 (Arm/Graviton)", "G4ad": "AMD Radeon Pro V520 (graphics)", "G4dn": "NVIDIA T4 (graphics/inference)", "Gr6": "Graviton single‑GPU L4", "Gr6f": "Graviton single‑GPU L4 (enhanced)", "Trn1": "AWS Trainium (non‑GPU)", "Trn1n": "AWS Trainium (100Gbps+) (non‑GPU)", "Trn2": "AWS Trainium v2 (non‑GPU)", "Inf1": "AWS Inferentia (non‑GPU)", "Inf2": "AWS Inferentia2 (non‑GPU)", "DL1": "Habana Gaudi (non‑GPU)", "DL2q": "Qualcomm Cloud AI (non‑GPU)", "F1": "Xilinx FPGA (non‑GPU)", "F2": "AWS FPGA (non‑GPU)", "VT1": "Video transcoding (non‑GPU)" };
+        const CATEGORY_ORDER = ["GB","B200","H200","H100","A100","L4","P4","Others"];
+
+        // --- UX State ---
+        let userDCs = {};
+        let selectedDC = null; // { name, lat, lng }
+        let dcMarkers = {}; // To hold references to the marker layers
+        let isLoadingFromUrl = false; // Flag to prevent multiple updates on initial load
+
+        // --- Map Setup ---
+        const map = L.map('map').setView([20, 0], 2.5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        const dcLayer = L.layerGroup().addTo(map);
+        const gcpLayer = L.markerClusterGroup({ maxClusterRadius: 30, iconCreateFunction: cluster => L.divIcon({ html: `<div><span>${cluster.getChildCount()}</span></div>`, className: 'marker-cluster gcp-cluster-icon', iconSize: new L.Point(40, 40) }), spiderfyOnMaxZoom: true, showCoverageOnHover: false, zoomToBoundsOnClick: true, disableClusteringAtZoom: 8 }).addTo(map);
+        const awsLayer = L.markerClusterGroup({ maxClusterRadius: 30, iconCreateFunction: cluster => L.divIcon({ html: `<div><span>${cluster.getChildCount()}</span></div>`, className: 'marker-cluster aws-cluster-icon', iconSize: new L.Point(40, 40) }), spiderfyOnMaxZoom: true, showCoverageOnHover: false, zoomToBoundsOnClick: true, disableClusteringAtZoom: 8 }).addTo(map);
+        const linesLayer = L.layerGroup().addTo(map);
+
+        // --- Helper Functions ---
+        function categorize(type, provider) { switch (type) { case 'A4X': return 'GB'; case 'P6e-GB200': return 'GB'; case 'A4': return 'B200'; case 'P6-B200': return 'B200'; case 'A3 Ultra': return 'H200'; case 'P5e': case 'P5en': return 'H200'; case 'A3 Mega': case 'A3 High': case 'A3 Edge': return 'H100'; case 'P5': return 'H100'; case 'A2 Ultra': case 'A2 Standard': return 'A100'; case 'P4d': case 'P4de': return 'A100'; case 'G2': return 'L4'; case 'G6': case 'G6f': case 'Gr6': case 'Gr6f': return 'L4'; case 'N1+P4': return 'P4'; default: return 'Others'; } }
+        function buildCategoryIndex() { const index = {}; CATEGORY_ORDER.forEach(c => index[c] = { GCP: new Set(), AWS: new Set() }); gcpData.forEach(dc => { Object.keys(dc.zones || {}).forEach(t => { const cat = categorize(t, 'GCP'); index[cat] ||= { GCP: new Set(), AWS: new Set() }; index[cat].GCP.add(t); }); }); awsData.forEach(dc => { (dc.families || []).forEach(t => { const cat = categorize(t, 'AWS'); index[cat] ||= { GCP: new Set(), AWS: new Set() }; index[cat].AWS.add(t); }); }); return index; }
+        function getDistance(lat1, lon1, lat2, lon2) { const R = 6371; const dLat = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180; const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2; return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); }
+
+        // --- URL State Management ---
+        function updateUrlWithState() {
+            const provider = document.querySelector('input[name="provider"]:checked').value;
+            const selectedTypes = getSelectedAcceleratorTypes();
+            const locationsJson = document.getElementById('dc-json-input').value;
+            const params = new URLSearchParams();
+
+            if (provider !== 'all') {
+                params.set('provider', provider);
+            }
+            if (selectedTypes.length > 0) {
+                params.set('gpus', selectedTypes.join(','));
+            }
+            if (locationsJson.trim().length > 2) {
+                try {
+                    JSON.parse(locationsJson); // Validate before encoding
+                    params.set('locations', btoa(encodeURIComponent(locationsJson)));
+                } catch (e) {
+                    console.warn("Could not set locations in URL due to invalid JSON.");
+                }
+            }
+            // Use replaceState to avoid polluting browser history on every filter change
+            history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+        }
+
+        function loadStateFromUrl() {
+            isLoadingFromUrl = true;
+            const params = new URLSearchParams(window.location.search);
+            const jsonStatus = document.getElementById('json-status');
+
+            // 1. Load Provider first as it affects the GPU list
+            const provider = params.get('provider');
+            if (provider && document.getElementById(`provider-${provider}`)) {
+                document.getElementById(`provider-${provider}`).checked = true;
+                updateGpuFilter();
+                renderCategoryFilter();
+            }
+
+            // 2. Load GPUs
+            const gpus = params.get('gpus');
+            if (gpus) {
+                const selectedGpus = new Set(gpus.split(','));
+                const gpuSelect = document.getElementById('gpu-type');
+                Array.from(gpuSelect.options).forEach(opt => {
+                    if (selectedGpus.has(opt.value)) {
+                        opt.selected = true;
+                    }
+                });
+                updateCategoryCheckboxesFromRawSelect();
+            }
+
+            // 3. Load Locations
+            const locationsB64 = params.get('locations');
+            if (locationsB64) {
+                try {
+                    const locationsJson = decodeURIComponent(atob(locationsB64));
+                    document.getElementById('dc-json-input').value = locationsJson;
+                    userDCs = JSON.parse(locationsJson);
+                    jsonStatus.textContent = `Loaded ${Object.keys(userDCs).length} locations from URL.`;
+                    jsonStatus.className = 'text-xs text-green-600';
+                } catch (e) {
+                    console.error("Failed to load locations from URL:", e);
+                    jsonStatus.textContent = 'Failed to load locations from URL.';
+                    jsonStatus.className = 'text-xs text-red-600';
+                }
+            }
+
+            isLoadingFromUrl = false;
+            triggerUpdate(); // Trigger a single, final update to render the map
+        }
+
+        // Helper to sync category checkboxes based on the raw select state
+        function updateCategoryCheckboxesFromRawSelect() {
+            const selectedRawTypes = new Set(Array.from(document.getElementById('gpu-type').selectedOptions).map(o => o.value));
+            const selectedCats = new Set();
+            selectedRawTypes.forEach(type => {
+                selectedCats.add(categorize(type, '')); // Provider doesn't matter for categorization
+            });
+
+            document.querySelectorAll('.category-checkbox').forEach(cb => {
+                cb.checked = selectedCats.has(cb.dataset.category);
+            });
+        }
+
+        // --- UI Rendering ---
+        function renderCategoryFilter() {
+            const container = document.getElementById('category-filter');
+            container.innerHTML = '';
+            const idx = buildCategoryIndex();
+            CATEGORY_ORDER.forEach(cat => {
+                const row = document.createElement('div');
+                const head = document.createElement('div');
+                head.className = 'cat-head';
+                const label = document.createElement('label');
+                label.className = 'text-sm font-medium text-gray-800 flex items-center cursor-pointer';
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.className = 'mr-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 category-checkbox';
+                cb.dataset.category = cat;
+                label.appendChild(cb);
+                label.appendChild(document.createTextNode(cat));
+                head.appendChild(label);
+                const counts = document.createElement('div');
+                counts.className = 'text-xs text-gray-500';
+                const gcount = idx[cat] ? idx[cat].GCP.size : 0;
+                const acount = idx[cat] ? idx[cat].AWS.size : 0;
+                if (gcount > 0 || acount > 0) {
+                    counts.innerHTML = `${gcount > 0 ? `<span class="chip chip-gcp">${gcount}</span>` : ''} ${acount > 0 ? `<span class="chip chip-aws">${acount}</span>` : ''}`;
+                }
+                head.appendChild(counts);
+                row.appendChild(head);
+                container.appendChild(row);
+            });
+            container.querySelectorAll('.category-checkbox').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    applyCategorySelectionToRawSelect();
+                    triggerUpdate();
+                });
+            });
+        }
+
+        function updateGpuFilter() {
+            const provider = document.querySelector('input[name="provider"]:checked').value;
+            const sel = document.getElementById('gpu-type');
+            const selected = new Set(Array.from(sel.selectedOptions).map(o => o.value));
+            sel.innerHTML = '';
+            const types = new Set();
+            if (provider === 'all' || provider === 'gcp') { gcpData.forEach(dc => { Object.keys(dc.zones || {}).forEach(t => types.add(t)); }); }
+            if (provider === 'all' || provider === 'aws') { awsData.forEach(dc => (dc.families || []).forEach(t => types.add(t))); }
+            [...types].sort().forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.textContent = t + (gpuDescriptions[t] ? ` — ${gpuDescriptions[t]}` : '');
+                if (selected.has(t)) opt.selected = true;
+                opt.title = t + (gpuDescriptions[t] ? ` — ${gpuDescriptions[t]}` : '');
+                sel.appendChild(opt);
+            });
+        }
+
+        // --- State and Update Logic ---
+        function getSelectedAcceleratorTypes() {
+            const fromSelect = new Set(Array.from(document.getElementById('gpu-type').selectedOptions).map(o => o.value));
+            const selectedCats = new Set(Array.from(document.querySelectorAll('.category-checkbox:checked')).map(cb => cb.dataset.category));
+            if (selectedCats.size === 0) return [...fromSelect];
+            const idx = buildCategoryIndex();
+            const out = new Set(fromSelect);
+            selectedCats.forEach(cat => {
+                if (!idx[cat]) return;
+                idx[cat].GCP.forEach(t => out.add(t));
+                idx[cat].AWS.forEach(t => out.add(t));
+            });
+            return [...out];
+        }
+
+        function applyCategorySelectionToRawSelect() {
+            const sel = document.getElementById('gpu-type');
+            const selectedCats = new Set(Array.from(document.querySelectorAll('.category-checkbox:checked')).map(cb => cb.dataset.category));
+            if (selectedCats.size === 0) return;
+            const idx = buildCategoryIndex();
+            const selectedTypes = new Set();
+            selectedCats.forEach(cat => {
+                if (!idx[cat]) return;
+                idx[cat].GCP.forEach(t => selectedTypes.add(t));
+                idx[cat].AWS.forEach(t => selectedTypes.add(t));
+            });
+            Array.from(sel.options).forEach(o => { o.selected = selectedTypes.has(o.value); });
+        }
+
+        function handleDCClick(name, lat, lng) {
+            selectedDC = { name, lat, lng };
+            triggerUpdate();
+        }
+
+        function triggerUpdate() {
+            if (isLoadingFromUrl) return; // Prevent updates while loading from URL
+            updateMap();
+            if (selectedDC) {
+                updateResults(selectedDC.name, selectedDC.lat, selectedDC.lng);
+            }
+            updateUrlWithState(); // Update the URL with the current state
+        }
+
+        function resetSelection() {
+            const placeholder = document.getElementById('results-placeholder');
+            const contentDiv = document.getElementById('results-content');
+            selectedDC = null;
+            linesLayer.clearLayers();
+            placeholder.classList.remove('hidden');
+            contentDiv.classList.add('hidden');
+            triggerUpdate();
+        }
+
+        function updateMap() {
+            dcLayer.clearLayers();
+            gcpLayer.clearLayers();
+            awsLayer.clearLayers();
+            dcMarkers = {};
+
+            const provider = document.querySelector('input[name="provider"]:checked').value;
+            const selectedTypes = getSelectedAcceleratorTypes();
+
+            // Create a dedicated pane for user DC markers to ensure they are on top
+            if (!map.getPane('dcPane')) {
+                map.createPane('dcPane');
+                map.getPane('dcPane').style.zIndex = 650; // Higher than default markers (400)
+            }
+
+            // User reference markers (rendered as rings)
+            for (const [name, c] of Object.entries(userDCs)) {
+                if (typeof c.lat !== 'number' || typeof c.lng !== 'number') continue;
+                const isSelected = selectedDC && selectedDC.name === name;
+                const marker = L.circleMarker([c.lat, c.lng], {
+                    pane: 'dcPane', // Render in the dedicated pane
+                    radius: isSelected ? 11 : 8,
+                    fill: false,
+                    color: isSelected ? '#059669' : '#16a34a',
+                    weight: isSelected ? 5 : 4,
+                    opacity: 1,
+                }).addTo(dcLayer);
+                marker.bindPopup(`<b>Your Location</b><br>${name}`);
+                marker.on('click', () => handleDCClick(name, c.lat, c.lng));
+                dcMarkers[name] = marker;
+            }
+
+            // GCP markers
+            if (provider === 'all' || provider === 'gcp') {
+                gcpLayer.clearLayers();
+                gcpData.forEach(dc => {
+                    const accelTypes = Object.keys(dc.zones || {});
+                    const show = selectedTypes.length === 0 || accelTypes.some(t => selectedTypes.includes(t));
+                    if (!show) return;
+                    const marker = L.marker([dc.lat, dc.lng], { icon: L.divIcon({ className: 'custom-div-icon', html: `<div style="background-color:#3B82F6; width:12px; height:12px; border-radius:50%; border:1px solid #1E40AF;"></div>`, iconSize: [12, 12], iconAnchor: [6, 6] }) });
+                    let popup = `<div class='mono'><b>GCP</b> — ${dc.location}<br><span class='text-xs'>Region <code>${dc.region}</code></span><hr class='my-2' />`;
+                    if (accelTypes.length === 0) { popup += `<i>No GPU/accelerator zones listed.</i>`; } else { accelTypes.sort().forEach(t => { const z = dc.zones[t]; popup += `• <b>${t}</b> <span class='gpu-info'>${gpuDescriptions[t] || ''}</span><br><span class='text-xs text-gray-500'>Zones: ${z.join(', ')}</span><br>`; }); }
+                    popup += `</div>`;
+                    marker.bindPopup(popup);
+                    gcpLayer.addLayer(marker);
+                });
+            }
+
+            // AWS markers
+            if (provider === 'all' || provider === 'aws') {
+                awsLayer.clearLayers();
+                awsData.forEach(dc => {
+                    const fams = dc.families || [];
+                    const show = selectedTypes.length === 0 || fams.some(f => selectedTypes.includes(f));
+                    if (!show) return;
+                    const marker = L.marker([dc.lat, dc.lng], { icon: L.divIcon({ className: 'custom-div-icon', html: `<div style="background-color:#F59E0B; width:12px; height:12px; border-radius:50%; border:1px solid #92400E;"></div>`, iconSize: [12, 12], iconAnchor: [6, 6] }) });
+                    let popup = `<div class='mono'><b>AWS</b> — ${dc.location}<br><span class='text-xs'>Region <code>${dc.region}</code></span><hr class='my-2' />`;
+                    if (fams.length === 0) { popup += `<i>No accelerated instance families listed.</i>`; } else { fams.sort().forEach(f => { popup += `• <b>${f}</b> <span class='gpu-info'>${gpuDescriptions[f] || ''}</span><br>`; }); }
+                    popup += `</div>`;
+                    marker.bindPopup(popup);
+                    awsLayer.addLayer(marker);
+                });
+            }
+        }
+
+        function updateResults(dcName, lat, lng) {
+            const placeholder = document.getElementById('results-placeholder');
+            const contentDiv = document.getElementById('results-content');
+            placeholder.classList.add('hidden');
+            contentDiv.classList.remove('hidden');
+
+            contentDiv.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-gray-800">Closest Regions to ${dcName}</h3>
+                    <button id="clear-selection-btn" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold">Clear</button>
+                </div>`;
+
+            const provider = document.querySelector('input[name="provider"]:checked').value;
+            const selectedTypes = getSelectedAcceleratorTypes();
+            const rows = [];
+
+            function considerGCP(dc) { const types = Object.keys(dc.zones || {}); const matches = selectedTypes.length === 0 ? types : types.filter(t => selectedTypes.includes(t)); if (matches.length === 0 && selectedTypes.length > 0) return; const dist = getDistance(lat, lng, dc.lat, dc.lng); rows.push({ provider: 'GCP', region: dc.region, location: dc.location, distance: dist, detail: matches.join(', '), lat: dc.lat, lng: dc.lng }); }
+            function considerAWS(dc) { const fams = dc.families || []; const matches = selectedTypes.length === 0 ? fams : fams.filter(f => selectedTypes.includes(f)); if (matches.length === 0 && selectedTypes.length > 0) return; const dist = getDistance(lat, lng, dc.lat, dc.lng); rows.push({ provider: 'AWS', region: dc.region, location: dc.location, distance: dist, detail: matches.join(', '), lat: dc.lat, lng: dc.lng }); }
+
+            if (provider === 'all' || provider === 'gcp') gcpData.forEach(considerGCP);
+            if (provider === 'all' || provider === 'aws') awsData.forEach(considerAWS);
+
+            rows.sort((a,b) => a.distance - b.distance);
+            linesLayer.clearLayers();
+
+            if (rows.length === 0) {
+                contentDiv.innerHTML += '<p class="text-gray-500 mt-4 text-center">No regions match the selected filters.</p>';
+                document.getElementById('clear-selection-btn').addEventListener('click', resetSelection);
+                return;
+            }
+
+            const ul = document.createElement('ul');
+            ul.className = 'space-y-2 mt-2';
+            rows.slice(0, 5).forEach((r, index) => {
+                const li = document.createElement('li');
+                li.className = 'p-3 bg-gray-50 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer';
+                const badge = r.provider === 'GCP' ? '<span class="chip chip-gcp">GCP</span>' : '<span class="chip chip-aws">AWS</span>';
+                li.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>${badge} <span class='mono'><code>${r.region}</code></span></div>
+                        <div class='font-bold text-indigo-600'>${r.distance.toFixed(0)} km</div>
+                    </div>
+                    <div class="text-xs text-gray-600">${r.location}</div>
+                    <div class='text-xs text-gray-500 mt-1 truncate'>Matches: ${r.detail || 'All types'}</div>`;
+                ul.appendChild(li);
+
+                const polyline = L.polyline([[lat, lng], [r.lat, r.lng]], { color: r.provider === 'GCP' ? '#3B82F6' : '#F59E0B', weight: 2, opacity: 0.6, dashArray: '5, 5' }).addTo(linesLayer);
+                li.addEventListener('mouseenter', () => polyline.setStyle({ weight: 4, opacity: 1 }));
+                li.addEventListener('mouseleave', () => polyline.setStyle({ weight: 2, opacity: 0.6 }));
+            });
+            contentDiv.appendChild(ul);
+
+            document.getElementById('clear-selection-btn').addEventListener('click', resetSelection);
+        }
+
+        // --- Panel Collapse UX ---
+        const toggleBtn = document.getElementById('toggle-panel-btn');
+        const panelContent = document.getElementById('panel-content');
+        const panelHeader = document.getElementById('panel-header');
+        const collapseIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>`;
+        const expandIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" /></svg>`;
+        toggleBtn.innerHTML = collapseIconSVG;
+        toggleBtn.addEventListener('click', () => {
+            panelContent.classList.toggle('hidden');
+            panelHeader.classList.toggle('mb-4');
+            toggleBtn.innerHTML = panelContent.classList.contains('hidden') ? expandIconSVG : collapseIconSVG;
+            toggleBtn.setAttribute('aria-label', panelContent.classList.contains('hidden') ? 'Expand panel' : 'Collapse panel');
+        });
+
+        // --- Event Listeners ---
+        document.querySelectorAll('input[name="provider"]').forEach(r => r.addEventListener('change', () => { updateGpuFilter(); renderCategoryFilter(); triggerUpdate(); }));
+        document.getElementById('gpu-type').addEventListener('change', triggerUpdate);
+        const dcInput = document.getElementById('dc-json-input');
+        const jsonStatus = document.getElementById('json-status');
+        document.getElementById('update-dcs-btn').addEventListener('click', () => {
+            try {
+                const newDCs = JSON.parse(dcInput.value || '{}');
+                if (typeof newDCs !== 'object' || newDCs === null || Array.isArray(newDCs)) {
+                    throw new Error("JSON must be an object.");
+                }
+                for(const key in newDCs) {
+                    if(typeof newDCs[key].lat !== 'number' || typeof newDCs[key].lng !== 'number') {
+                        throw new Error(`Invalid format for "${key}". Missing lat/lng numbers.`);
+                    }
+                }
+                userDCs = newDCs;
+                dcInput.classList.remove('border-red-500');
+                dcInput.classList.add('border-gray-300');
+                jsonStatus.textContent = `Updated with ${Object.keys(userDCs).length} locations.`;
+                jsonStatus.className = 'text-xs text-green-600';
+                resetSelection();
+            } catch (e) {
+                dcInput.classList.add('border-red-500');
+                dcInput.classList.remove('border-gray-300');
+                jsonStatus.textContent = 'Invalid JSON format. ' + e.message;
+                jsonStatus.className = 'text-xs text-red-600';
+            }
+        });
+
+        // --- Initial Setup ---
+        updateGpuFilter();
+        renderCategoryFilter();
+        updateMap();
+        loadStateFromUrl(); // Load state from URL on page load
+    </script>
+</body>
+</html>
