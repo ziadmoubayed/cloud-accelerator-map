@@ -213,10 +213,613 @@
 
     <script>
         // --- DATA ---
-        const gcpData = [ { region: "asia-east1", location: "Changhua County, Taiwan", lat: 24.051, lng: 120.516, zones: { "A3 Mega": ["asia-east1-c"], "A3 High": ["asia-east1-c"], "G2": ["asia-east1-a","asia-east1-b","asia-east1-c"], "N1+T4": ["asia-east1-a","asia-east1-c"], "N1+V100": ["asia-east1-c"], "N1+P100": ["asia-east1-a","asia-east1-c"] }}, { region: "asia-east2", location: "Hong Kong", lat: 22.3193, lng: 114.1694, zones: { "N1+T4": ["asia-east2-a","asia-east2-c"] }}, { region: "asia-northeast1", location: "Tokyo, Japan", lat: 35.6895, lng: 139.6917, zones: { "A2 Standard": ["asia-northeast1-a","asia-northeast1-c"], "A3 Edge": ["asia-northeast1-b"], "A3 Mega": ["asia-northeast1-b"], "A3 High": ["asia-northeast1-b"], "G2": ["asia-northeast1-a","asia-northeast1-b","asia-northeast1-c"], "N1+T4": ["asia-northeast1-a","asia-northeast1-c"] }}, { region: "asia-northeast2", location: "Osaka, Japan", lat: 34.6937, lng: 135.5023, zones: { } }, { region: "asia-northeast3", location: "Seoul, South Korea", lat: 37.5665, lng: 126.9780, zones: { "A3 Edge": ["asia-northeast3-a","asia-northeast3-c"], "A2 Standard": ["asia-northeast3-a","asia-northeast3-b"], "G2": ["asia-northeast3-a","asia-northeast3-b"], "N1+T4": ["asia-northeast3-b","asia-northeast3-c"] }}, { region: "asia-south1", location: "Mumbai, India", lat: 19.0760, lng: 72.8777, zones: { "A3 Ultra": ["asia-south1-b"], "A3 Edge": ["asia-south1-c"], "G2": ["asia-south1-a","asia-south1-b","asia-south1-c"], "N1+T4": ["asia-south1-a","asia-south1-b"] }}, { region: "asia-south2", location: "Delhi, India", lat: 28.6139, lng: 77.2090, zones: { "A3 Ultra": ["asia-south2-c"] }}, { region: "asia-southeast1", location: "Jurong West, Singapore", lat: 1.3496, lng: 103.7072, zones: { "A3 Mega": ["asia-southeast1-b","asia-southeast1-c"], "A3 High": ["asia-southeast1-b","asia-southeast1-c"], "A3 Edge": ["asia-southeast1-b","asia-southeast1-c"], "A2 Ultra": ["asia-southeast1-c"], "A2 Standard": ["asia-southeast1-b","asia-southeast1-c"], "G2": ["asia-southeast1-a","asia-southeast1-b","asia-southeast1-c"], "N1+T4": ["asia-southeast1-a","asia-southeast1-b","asia-southeast1-c"], "N1+P4": ["asia-southeast1-b","asia-southeast1-c"] }}, { region: "asia-southeast2", location: "Jakarta, Indonesia", lat: -6.2088, lng: 106.8456, zones: { "N1+T4": ["asia-southeast2-b"] }}, { region: "australia-southeast1", location: "Sydney, Australia", lat: -33.8688, lng: 151.2093, zones: { "A3 Mega": ["australia-southeast1-c"], "N1+T4": ["australia-southeast1-a","australia-southeast1-c"], "N1+P4": ["australia-southeast1-a","australia-southeast1-b"], "N1+P100": ["australia-southeast1-c"] }}, { region: "australia-southeast2", location: "Melbourne, Australia", lat: -37.8136, lng: 144.9631, zones: { }}, { region: "europe-west1", location: "St. Ghislain, Belgium", lat: 50.445, lng: 3.82, zones: { "A3 Ultra": ["europe-west1-b"], "A3 Mega": ["europe-west1-b","europe-west1-c"], "A3 High": ["europe-west1-b","europe-west1-c"], "G2": ["europe-west1-b","europe-west1-c"], "N1+T4": ["europe-west1-b","europe-west1-c","europe-west1-d"], "N1+P100": ["europe-west1-b","europe-west1-d"] }}, { region: "europe-west2", location: "London, England", lat: 51.5074, lng: -0.1278, zones: { "A3 Edge": ["europe-west2-b"], "G2": ["europe-west2-a","europe-west2-b"], "N1+T4": ["europe-west2-a","europe-west2-b"] }}, { region: "europe-west3", location: "Frankfurt, Germany", lat: 50.1109, lng: 8.6821, zones: { "A3 High": ["europe-west3-c"], "A3 Edge": ["europe-west3-a","europe-west3-c"], "G2": ["europe-west3-a","europe-west3-b"], "N1+T4": ["europe-west3-b"] }}, { region: "europe-west4", location: "Eemshaven, Netherlands", lat: 53.442, lng: 6.83, zones: { "A3 Ultra": ["europe-west4-a"], "A3 Mega": ["europe-west4-b","europe-west4-c"], "A3 High": ["europe-west4-c"], "A3 Edge": ["europe-west4-b","europe-west4-c"], "A2 Ultra": ["europe-west4-a","europe-west4-b","europe-west4-c"], "A2 Standard": ["europe-west4-a","europe-west4-b"], "G2": ["europe-west4-a","europe-west4-b","europe-west4-c"], "N1+T4": ["europe-west4-a","europe-west4-b","europe-west4-c"], "N1+P4": ["europe-west4-b","europe-west4-c"], "N1+V100": ["europe-west4-a","europe-west4-b","europe-west4-c"], "N1+P100": ["europe-west4-a"] }}, { region: "europe-west6", location: "Zurich, Switzerland", lat: 47.3769, lng: 8.5417, zones: { "G2": ["europe-west6-b","europe-west6-c"] }}, { region: "europe-west9", location: "Paris, France", lat: 48.8566, lng: 2.3522, zones: { "A3 Edge": ["europe-west9-c"] }}, { region: "europe-central2", location: "Warsaw, Poland", lat: 52.2297, lng: 21.0122, zones: { "N1+T4": ["europe-central2-c"] }}, { region: "northamerica-northeast1", location: "Montréal, Québec, Canada", lat: 45.5017, lng: -73.5673, zones: { "N1+P4": ["northamerica-northeast1-a","northamerica-northeast1-b","northamerica-northeast1-c"], "N1+T4": ["northamerica-northeast1-c"] }}, { region: "northamerica-northeast2", location: "Toronto, Ontario, Canada", lat: 43.6532, lng: -79.3832, zones: { "G2": ["northamerica-northeast2-a","northamerica-northeast2-b"], "A3 Edge": ["northamerica-northeast2-c"] }}, { region: "us-central1", location: "Council Bluffs, Iowa, USA", lat: 41.2619, lng: -95.8608, zones: { "A4X": ["us-central1-a"], "A4": ["us-central1-b"], "A3 Ultra": ["us-central1-b"], "A3 Mega": ["us-central1-a","us-central1-b","us-central1-c"], "A3 High": ["us-central1-a","us-central1-c"], "A3 Edge": ["us-central1-a","us-central1-b","us-central1-c"], "A2 Ultra": ["us-central1-a","us-central1-c"], "A2 Standard": ["us-central1-a","us-central1-b","us-central1-c","us-central1-f"], "G4": ["us-central1-b"], "G2": ["us-central1-a","us-central1-b","us-central1-c"], "N1+T4": ["us-central1-a","us-central1-b","us-central1-c","us-central1-f"], "N1+P4": ["us-central1-a","us-central1-c"], "N1+V100": ["us-central1-a","us-central1-b","us-central1-c","us-central1-f"], "N1+P100": ["us-central1-c","us-central1-f"] }}, { region: "us-east1", location: "Moncks Corner, South Carolina, USA", lat: 33.1950, lng: -80.0130, zones: { "A3 Ultra": ["us-east1-d"], "A2 Standard": ["us-east1-b"], "G2": ["us-east1-b","us-east1-c","us-east1-d"], "N1+T4": ["us-east1-c","us-east1-d"], "N1+V100": ["us-east1-c"], "N1+P100": ["us-east1-b","us-east1-c"] }}, { region: "us-east4", location: "Ashburn, Virginia, USA", lat: 39.0438, lng: -77.4874, zones: { "A3 Ultra": ["us-east4-b"], "A3 Mega": ["us-east4-a","us-east4-b","us-east4-c"], "A3 High": ["us-east4-a","us-east4-b"], "A3 Edge": ["us-east4-a","us-east4-b","us-east4-c"], "A2 Ultra": ["us-east4-c"], "G2": ["us-east4-a","us-east4-c"], "N1+T4": ["us-east4-a","us-east4-b","us-east4-c"], "N1+P4": ["us-east4-a","us-east4-b","us-east4-c"] }}, { region: "us-east5", location: "Columbus, Ohio, USA", lat: 39.9612, lng: -82.9988, zones: { "A3 Ultra": ["us-east5-a"], "A3 Mega": ["us-east5-a"], "A3 High": ["us-east5-a"], "A3 Edge": ["us-east5-a"], "A2 Ultra": ["us-east5-b"] }}, { region: "us-west1", location: "The Dalles, Oregon, USA", lat: 45.5946, lng: -121.1787, zones: { "A3 Ultra": ["us-west1-c"], "A3 Mega": ["us-west1-a","us-west1-b"], "A3 High": ["us-west1-a","us-west1-b"], "A3 Edge": ["us-west1-a","us-west1-b"], "A2 Standard": ["us-west1-b"], "G2": ["us-west1-a","us-west1-b","us-west1-c"], "N1+T4": ["us-west1-a","us-west1-b"], "N1+V100": ["us-west1-a","us-west1-b"], "N1+P100": ["us-west1-a","us-west1-b"] }}, { region: "us-west2", location: "Los Angeles, California, USA", lat: 34.0522, lng: -118.2437, zones: { "N1+T4": ["us-west2-c"], "N1+P4": ["us-west2-c"] }}, { region: "us-west3", location: "Salt Lake City, Utah, USA", lat: 40.7608, lng: -111.8910, zones: { "A2 Standard": ["us-west3-b"], "N1+T4": ["us-west3-b"] }}, { region: "us-west4", location: "Las Vegas, Nevada, USA", lat: 36.1699, lng: -115.1398, zones: { "A3 Mega": ["us-west4-a"], "A3 High": ["us-west4-a"], "A3 Edge": ["us-west4-a"], "A2 Standard": ["us-west4-b"], "G2": ["us-west4-c"], "N1+T4": ["us-west4-a","us-west4-b"] }}, { region: "us-south1", location: "Dallas, Texas, USA", lat: 32.7767, lng: -96.7970, zones: { "A3 Ultra": ["us-south1-b"] }} ];
-        const awsData = [ { region: "us-east-1", location: "US East (N. Virginia) — Ashburn, VA", lat: 39.0438, lng: -77.4874, families: ["DL1","F1","F2","G4ad","G4dn","G5","G5g","G6","G6e","G6f","Gr6","Gr6f","Inf1","Inf2","P3","P3dn","P4d","P4de","P5","P5en","P6-B200","P6e-GB200","Trn1","Trn1n","VT1"] }, { region: "us-east-2", location: "US East (Ohio) — Columbus, OH", lat: 39.9612, lng: -82.9988, families: ["G4ad","G4dn","G5","G6","G6e","G6f","Gr6","Gr6f","Inf1","Inf2","P3","P4d","P5","P5e","P5en","P6-B200","Trn1","Trn1n","Trn2"] }, { region: "us-west-1", location: "US West (N. California) — Bay Area", lat: 37.8272, lng: -122.2913, families: ["G4dn","Inf1","P5","P5en"] }, { region: "us-west-2", location: "US West (Oregon)", lat: 45.5152, lng: -122.6784, families: ["DL1","DL2q","F1","F2","G4ad","G4dn","G5","G5g","G6","G6e","G6f","Gr6","Gr6f","Inf1","Inf2","P3","P3dn","P4d","P4de","P5","P5e","P5en","P6-B200","Trn1","Trn1n","VT1"] }, { region: "ap-east-1", location: "Asia Pacific (Hong Kong)", lat: 22.3193, lng: 114.1694, families: ["G4dn","Inf1"] }, { region: "ap-south-1", location: "Asia Pacific (Mumbai)", lat: 19.0760, lng: 72.8777, families: ["G4dn","G5","Inf1","Inf2","P4d","P5","Trn1","G6"] }, { region: "ap-northeast-2", location: "Asia Pacific (Seoul)", lat: 37.5665, lng: 126.9780, families: ["G4dn","G5","G5g","Inf1","Inf2","P3","P4d","G6"] }, { region: "ap-southeast-1", location: "Asia Pacific (Singapore)", lat: 1.3521, lng: 103.8198, families: ["G4dn","G5g","Inf1","Inf2","P3","P4de"] }, { region: "ap-southeast-2", location: "Asia Pacific (Sydney)", lat: -33.8688, lng: 151.2093, families: ["F1","G4dn","G5","Inf1","Inf2","P3","P4d","P5","Trn1","G6"] }, { region: "ap-northeast-1", location: "Asia Pacific (Tokyo)", lat: 35.6895, lng: 139.6917, families: ["G4ad","G4dn","G5","G5g","Inf1","Inf2","P3","P3dn","P4d","P4de","P5","VT1","G6"] }, { region: "ca-central-1", location: "Canada (Central) — Montréal, QC", lat: 45.5017, lng: -73.5673, families: ["G4ad","G4dn","G5","G6","G6f","Gr6","Gr6f","Inf1","P3","P4d","P5"] }, { region: "eu-central-1", location: "Europe (Frankfurt)", lat: 50.1109, lng: 8.6821, families: ["DL2q","F1","G4ad","G4dn","G5","G5g","G6","G6e","G6f","Gr6","Gr6f","Inf1","Inf2","P3","P4d","P4de"] }, { region: "eu-west-1", location: "Europe (Ireland)", lat: 53.3498, lng: -6.2603, families: ["F1","G4ad","G4dn","G5","Inf1","Inf2","P3","P3dn","P4d","VT1"] }, { region: "eu-west-2", location: "Europe (London)", lat: 51.5074, lng: -0.1278, families: ["F1","F2","G4ad","G4dn","G5","G6","G6f","Gr6","Gr6f","Inf1","Inf2","P3","P5","P5e"] }, { region: "eu-south-1", location: "Europe (Milan)", lat: 45.4642, lng: 9.1900, families: ["G4dn","Inf1"] }, { region: "eu-west-3", location: "Europe (Paris)", lat: 48.8566, lng: 2.3522, families: ["G4dn","Inf1","Inf2","G6"] }, { region: "eu-north-1", location: "Europe (Stockholm)", lat: 59.3293, lng: 18.0686, families: ["G4dn","G5","Inf1","Inf2","P5","G6","G6e"] }, { region: "me-south-1", location: "Middle East (Bahrain)", lat: 26.2235, lng: 50.5876, families: ["G4dn","Inf1"] }, { region: "sa-east-1", location: "South America (São Paulo)", lat: -23.5505, lng: -46.6333, families: ["G4dn","G5","Inf1","Inf2","P4d","P5","G6"] } ];
-        const gpuDescriptions = { "A4X": "NVIDIA GB200 Grace Blackwell Superchips", "A4": "NVIDIA B200 Blackwell GPUs", "A3 Ultra": "NVIDIA H200 SXM GPUs", "A3 Mega": "NVIDIA H100 SXM GPUs", "A3 High": "NVIDIA H100 SXM GPUs", "A3 Edge": "NVIDIA H100 SXM GPUs", "A2 Ultra": "NVIDIA A100 80GB GPUs", "A2 Standard": "NVIDIA A100 40GB GPUs", "G4": "RTX 6000 (Blackwell Server Edition)", "G2": "NVIDIA L4", "N1+T4": "NVIDIA T4 (attached to N1)", "N1+V100": "NVIDIA V100 (attached to N1)", "N1+P100": "NVIDIA P100 (attached to N1)", "N1+P4": "NVIDIA P4 (attached to N1)", "P6e-GB200": "NVIDIA GB200 NVL72 (preview / selective regions)", "P6-B200": "NVIDIA Blackwell B200", "P5": "NVIDIA H100", "P5e": "NVIDIA H200", "P5en": "NVIDIA H200 (enhanced network)", "P4d": "NVIDIA A100 40GB", "P4de": "NVIDIA A100 80GB", "P3": "NVIDIA V100", "P3dn": "NVIDIA V100 (100Gbps network)", "G6e": "NVIDIA L40S (graphics/inference)", "G6": "NVIDIA L4 (graphics/inference)", "G6f": "NVIDIA L4 (variant)", "G5": "NVIDIA A10G (graphics/inference)", "G5g": "NVIDIA T4 (Arm/Graviton)", "G4ad": "AMD Radeon Pro V520 (graphics)", "G4dn": "NVIDIA T4 (graphics/inference)", "Gr6": "Graviton single‑GPU L4", "Gr6f": "Graviton single‑GPU L4 (enhanced)", "Trn1": "AWS Trainium (non‑GPU)", "Trn1n": "AWS Trainium (100Gbps+) (non‑GPU)", "Trn2": "AWS Trainium v2 (non‑GPU)", "Inf1": "AWS Inferentia (non‑GPU)", "Inf2": "AWS Inferentia2 (non‑GPU)", "DL1": "Habana Gaudi (non‑GPU)", "DL2q": "Qualcomm Cloud AI (non‑GPU)", "F1": "Xilinx FPGA (non‑GPU)", "F2": "AWS FPGA (non‑GPU)", "VT1": "Video transcoding (non‑GPU)" };
-        const CATEGORY_ORDER = ["GB","B200","H200","H100","A100","L4","P4","Others"];
+const gcpData = [
+  {
+    region: "asia-east1",
+    location: "Changhua County, Taiwan",
+    lat: 24.051,
+    lng: 120.516,
+    zones: {
+      "G2": ["asia-east1-a", "asia-east1-b", "asia-east1-c"],
+      "N1+T4": ["asia-east1-a", "asia-east1-c"],
+      "N1+P100": ["asia-east1-a", "asia-east1-c"],
+      "A3 Mega": ["asia-east1-c"],
+      "A3 High": ["asia-east1-c"],
+      "N1+V100": ["asia-east1-c"]
+    }
+  },
+  {
+    region: "asia-east2",
+    location: "Hong Kong",
+    lat: 22.3193,
+    lng: 114.1694,
+    zones: {
+      "N1+T4": ["asia-east2-a", "asia-east2-c"]
+    }
+  },
+  {
+    region: "asia-northeast1",
+    location: "Tokyo, Japan",
+    lat: 35.6895,
+    lng: 139.6917,
+    zones: {
+      "A2 Standard": ["asia-northeast1-a", "asia-northeast1-c"],
+      "G2": ["asia-northeast1-a", "asia-northeast1-b", "asia-northeast1-c"],
+      "N1+T4": ["asia-northeast1-a", "asia-northeast1-c"],
+      "A4": ["asia-northeast1-b"],
+      "A3 Edge": ["asia-northeast1-b"],
+      "A3 Mega": ["asia-northeast1-b"],
+      "A3 High": ["asia-northeast1-b"]
+    }
+  },
+  {
+    region: "asia-northeast2",
+    location: "Osaka, Japan",
+    lat: 34.6937,
+    lng: 135.5023,
+    zones: {}
+  },
+  {
+    region: "asia-northeast3",
+    location: "Seoul, South Korea",
+    lat: 37.5665,
+    lng: 126.978,
+    zones: {
+      "A3 Edge": ["asia-northeast3-a", "asia-northeast3-c"],
+      "G2": ["asia-northeast3-a", "asia-northeast3-b"],
+      "A2 Standard": ["asia-northeast3-b"],
+      "N1+T4": ["asia-northeast3-b", "asia-northeast3-c"]
+    }
+  },
+  {
+    region: "asia-south1",
+    location: "Mumbai, India",
+    lat: 19.076,
+    lng: 72.8777,
+    zones: {
+      "G2": ["asia-south1-a", "asia-south1-b", "asia-south1-c"],
+      "N1+T4": ["asia-south1-a", "asia-south1-b"],
+      "A3 Ultra": ["asia-south1-b"],
+      "A3 Edge": ["asia-south1-c"]
+    }
+  },
+  {
+    region: "asia-south2",
+    location: "Delhi, India",
+    lat: 28.6139,
+    lng: 77.209,
+    zones: {
+      "A3 Ultra": ["asia-south2-c"],
+      "G4": ["asia-south2-c"]
+    }
+  },
+  {
+    region: "asia-southeast1",
+    location: "Jurong West, Singapore",
+    lat: 1.3496,
+    lng: 103.7072,
+    zones: {
+      "G2": ["asia-southeast1-a", "asia-southeast1-b", "asia-southeast1-c"],
+      "N1+T4": ["asia-southeast1-a", "asia-southeast1-b", "asia-southeast1-c"],
+      "A4": ["asia-southeast1-b"],
+      "A3 Mega": ["asia-southeast1-b", "asia-southeast1-c"],
+      "A3 High": ["asia-southeast1-b", "asia-southeast1-c"],
+      "A3 Edge": ["asia-southeast1-b", "asia-southeast1-c"],
+      "A2 Standard": ["asia-southeast1-b", "asia-southeast1-c"],
+      "G4": ["asia-southeast1-b", "asia-southeast1-c"],
+      "N1+P4": ["asia-southeast1-b", "asia-southeast1-c"],
+      "A2 Ultra": ["asia-southeast1-c"]
+    }
+  },
+  {
+    region: "asia-southeast2",
+    location: "Jakarta, Indonesia",
+    lat: -6.2088,
+    lng: 106.8456,
+    zones: {
+      "N1+T4": ["asia-southeast2-a", "asia-southeast2-b"],
+      "G4": ["asia-southeast2-b", "asia-southeast2-c"]
+    }
+  },
+  {
+    region: "australia-southeast1",
+    location: "Sydney, Australia",
+    lat: -33.8688,
+    lng: 151.2093,
+    zones: {
+      "N1+T4": ["australia-southeast1-a", "australia-southeast1-c"],
+      "N1+P4": ["australia-southeast1-a", "australia-southeast1-b"],
+      "A3 Mega": ["australia-southeast1-c"],
+      "N1+P100": ["australia-southeast1-c"]
+    }
+  },
+  {
+    region: "australia-southeast2",
+    location: "Melbourne, Australia",
+    lat: -37.8136,
+    lng: 144.9631,
+    zones: {}
+  },
+  {
+    region: "europe-central2",
+    location: "Warsaw, Poland",
+    lat: 52.2297,
+    lng: 21.0122,
+    zones: {
+      "N1+T4": ["europe-central2-b", "europe-central2-c"]
+    }
+  },
+  {
+    region: "europe-north1",
+    location: "Hamina, Finland",
+    lat: 60.5693,
+    lng: 27.1878,
+    zones: {
+      "G4": ["europe-north1-a"]
+    }
+  },
+  {
+    region: "europe-west1",
+    location: "St. Ghislain, Belgium",
+    lat: 50.445,
+    lng: 3.82,
+    zones: {
+      "A3 Ultra": ["europe-west1-b"],
+      "A3 Mega": ["europe-west1-b", "europe-west1-c"],
+      "A3 High": ["europe-west1-b", "europe-west1-c"],
+      "G2": ["europe-west1-b", "europe-west1-c"],
+      "N1+T4": ["europe-west1-b", "europe-west1-c", "europe-west1-d"],
+      "N1+P100": ["europe-west1-b", "europe-west1-d"],
+      "G4": ["europe-west1-c"]
+    }
+  },
+  {
+    region: "europe-west2",
+    location: "London, England",
+    lat: 51.5074,
+    lng: -0.1278,
+    zones: {
+      "G2": ["europe-west2-a", "europe-west2-b"],
+      "N1+T4": ["europe-west2-a", "europe-west2-b"],
+      "G4": ["europe-west2-b"]
+    }
+  },
+  {
+    region: "europe-west3",
+    location: "Frankfurt, Germany",
+    lat: 50.1109,
+    lng: 8.6821,
+    zones: {
+      "G2": ["europe-west3-a", "europe-west3-b"],
+      "N1+T4": ["europe-west3-b"]
+    }
+  },
+  {
+    region: "europe-west4",
+    location: "Eemshaven, Netherlands",
+    lat: 53.442,
+    lng: 6.83,
+    zones: {
+      "A3 Ultra": ["europe-west4-a"],
+      "A2 Ultra": ["europe-west4-a"],
+      "A2 Standard": ["europe-west4-a", "europe-west4-b"],
+      "G4": ["europe-west4-a", "europe-west4-b"],
+      "G2": ["europe-west4-a", "europe-west4-b", "europe-west4-c"],
+      "N1+T4": ["europe-west4-a", "europe-west4-b", "europe-west4-c"],
+      "N1+V100": ["europe-west4-a", "europe-west4-b", "europe-west4-c"],
+      "N1+P100": ["europe-west4-a"],
+      "A4": ["europe-west4-b"],
+      "A3 Mega": ["europe-west4-b", "europe-west4-c"],
+      "A3 Edge": ["europe-west4-b", "europe-west4-c"],
+      "N1+P4": ["europe-west4-b", "europe-west4-c"],
+      "A3 High": ["europe-west4-c"]
+    }
+  },
+  {
+    region: "europe-west6",
+    location: "Zurich, Switzerland",
+    lat: 47.3769,
+    lng: 8.5417,
+    zones: {
+      "G2": ["europe-west6-b", "europe-west6-c"]
+    }
+  },
+  {
+    region: "europe-west8",
+    location: "Milan, Italy",
+    lat: 45.4642,
+    lng: 9.19,
+    zones: {
+      "G4": ["europe-west8-b"]
+    }
+  },
+  {
+    region: "europe-west9",
+    location: "Paris, France",
+    lat: 48.8566,
+    lng: 2.3522,
+    zones: {
+      "A3 Edge": ["europe-west9-c"]
+    }
+  },
+  {
+    region: "me-central2",
+    location: "Dammam, Saudi Arabia",
+    lat: 26.4207,
+    lng: 50.0888,
+    zones: {
+      "G2": ["me-central2-a", "me-central2-c"]
+    }
+  },
+  {
+    region: "me-west1",
+    location: "Tel Aviv, Israel",
+    lat: 32.0853,
+    lng: 34.7818,
+    zones: {
+      "A2 Standard": ["me-west1-a", "me-west1-c"],
+      "N1+T4": ["me-west1-b", "me-west1-c"]
+    }
+  },
+  {
+    region: "northamerica-northeast1",
+    location: "Montréal, Québec, Canada",
+    lat: 45.5017,
+    lng: -73.5673,
+    zones: {
+      "N1+P4": ["northamerica-northeast1-a", "northamerica-northeast1-b", "northamerica-northeast1-c"],
+      "N1+T4": ["northamerica-northeast1-c"]
+    }
+  },
+  {
+    region: "northamerica-northeast2",
+    location: "Toronto, Ontario, Canada",
+    lat: 43.6532,
+    lng: -79.3832,
+    zones: {
+      "G2": ["northamerica-northeast2-a", "northamerica-northeast2-b"],
+      "A3 Edge": ["northamerica-northeast2-c"]
+    }
+  },
+  {
+    region: "southamerica-east1",
+    location: "Osasco, São Paulo, Brazil",
+    lat: -23.5329,
+    lng: -46.792,
+    zones: {
+      "N1+T4": ["southamerica-east1-a", "southamerica-east1-c"]
+    }
+  },
+  {
+    region: "us-central1",
+    location: "Council Bluffs, Iowa, USA",
+    lat: 41.2619,
+    lng: -95.8608,
+    zones: {
+      "A4X": ["us-central1-a"],
+      "A3 Mega": ["us-central1-a", "us-central1-b", "us-central1-c"],
+      "A3 High": ["us-central1-a", "us-central1-c"],
+      "A3 Edge": ["us-central1-a", "us-central1-b", "us-central1-c"],
+      "A2 Ultra": ["us-central1-a", "us-central1-c"],
+      "A2 Standard": ["us-central1-a", "us-central1-b", "us-central1-c", "us-central1-f"],
+      "G2": ["us-central1-a", "us-central1-b", "us-central1-c"],
+      "N1+T4": ["us-central1-a", "us-central1-b", "us-central1-c", "us-central1-f"],
+      "N1+P4": ["us-central1-a", "us-central1-c"],
+      "N1+V100": ["us-central1-a", "us-central1-b", "us-central1-c", "us-central1-f"],
+      "A4X Max": ["us-central1-b"],
+      "A4": ["us-central1-b"],
+      "A3 Ultra": ["us-central1-b"],
+      "G4": ["us-central1-b", "us-central1-f"],
+      "N1+P100": ["us-central1-c", "us-central1-f"]
+    }
+  },
+  {
+    region: "us-east1",
+    location: "Moncks Corner, South Carolina, USA",
+    lat: 33.195,
+    lng: -80.013,
+    zones: {
+      "A4": ["us-east1-b"],
+      "A2 Standard": ["us-east1-b"],
+      "G4": ["us-east1-b"],
+      "G2": ["us-east1-b", "us-east1-c", "us-east1-d"],
+      "N1+P100": ["us-east1-b", "us-east1-c"],
+      "N1+T4": ["us-east1-c", "us-east1-d"],
+      "N1+V100": ["us-east1-c"],
+      "A3 Ultra": ["us-east1-d"]
+    }
+  },
+  {
+    region: "us-east4",
+    location: "Ashburn, Virginia, USA",
+    lat: 39.0438,
+    lng: -77.4874,
+    zones: {
+      "A3 Mega": ["us-east4-a", "us-east4-b", "us-east4-c"],
+      "A3 High": ["us-east4-a", "us-east4-b"],
+      "A3 Edge": ["us-east4-a", "us-east4-b", "us-east4-c"],
+      "G2": ["us-east4-a", "us-east4-c"],
+      "N1+T4": ["us-east4-a", "us-east4-b", "us-east4-c"],
+      "N1+P4": ["us-east4-a", "us-east4-b", "us-east4-c"],
+      "A4X Max": ["us-east4-b"],
+      "A4": ["us-east4-b"],
+      "A3 Ultra": ["us-east4-b"],
+      "A2 Ultra": ["us-east4-c"],
+      "G4": ["us-east4-c"]
+    }
+  },
+  {
+    region: "us-east5",
+    location: "Columbus, Ohio, USA",
+    lat: 39.9612,
+    lng: -82.9988,
+    zones: {
+      "A2 Ultra": ["us-east5-a"],
+      "A3 Ultra": ["us-east5-a"],
+      "A3 Mega": ["us-east5-a"],
+      "A3 High": ["us-east5-a"],
+      "A3 Edge": ["us-east5-a"],
+      "G4": ["us-east5-a", "us-east5-b", "us-east5-c"]
+    }
+  },
+  {
+    region: "us-west1",
+    location: "The Dalles, Oregon, USA",
+    lat: 45.5946,
+    lng: -121.1787,
+    zones: {
+      "A3 Mega": ["us-west1-a", "us-west1-b"],
+      "A3 High": ["us-west1-a", "us-west1-b"],
+      "A3 Edge": ["us-west1-a", "us-west1-b"],
+      "G2": ["us-west1-a", "us-west1-b", "us-west1-c"],
+      "N1+T4": ["us-west1-a", "us-west1-b"],
+      "N1+V100": ["us-west1-a", "us-west1-b"],
+      "N1+P100": ["us-west1-a", "us-west1-b"],
+      "A2 Standard": ["us-west1-b"],
+      "G4": ["us-west1-b", "us-west1-c"],
+      "A3 Ultra": ["us-west1-c"]
+    }
+  },
+  {
+    region: "us-west2",
+    location: "Los Angeles, California, USA",
+    lat: 34.0522,
+    lng: -118.2437,
+    zones: {
+      "N1+T4": ["us-west2-b", "us-west2-c"],
+      "N1+P4": ["us-west2-b", "us-west2-c"],
+      "A4": ["us-west2-c"]
+    }
+  },
+  {
+    region: "us-west3",
+    location: "Salt Lake City, Utah, USA",
+    lat: 40.7608,
+    lng: -111.891,
+    zones: {
+      "G4": ["us-west3-a"],
+      "A4": ["us-west3-b", "us-west3-c"],
+      "A2 Standard": ["us-west3-b"],
+      "N1+T4": ["us-west3-b"]
+    }
+  },
+  {
+    region: "us-west4",
+    location: "Las Vegas, Nevada, USA",
+    lat: 36.1699,
+    lng: -115.1398,
+    zones: {
+      "A3 Mega": ["us-west4-a"],
+      "A3 High": ["us-west4-a"],
+      "A3 Edge": ["us-west4-a"],
+      "G2": ["us-west4-a", "us-west4-c"],
+      "N1+T4": ["us-west4-a", "us-west4-b"],
+      "G4": ["us-west4-a"],
+      "A2 Standard": ["us-west4-b"]
+    }
+  },
+  {
+    region: "us-south1",
+    location: "Dallas, Texas, USA",
+    lat: 32.7767,
+    lng: -96.797,
+    zones: {
+      "G4": ["us-south1-a", "us-south1-b"],
+      "A4": ["us-south1-b"],
+      "A3 Ultra": ["us-south1-b"]
+    }
+  }
+];
+const awsData = [
+  { 
+    region: "us-east-1", 
+    location: "US East (N. Virginia) — Ashburn, VA", 
+    lat: 39.0438, 
+    lng: -77.4874, 
+    families: ["DL1","F1","F2","G4ad","G4dn","G5","G5g","G6","G6e","G6f","Gr6","G7e","Inf1","Inf2","P3","P4d","P4de","P5","P5en","P6-B200","Trn1","Trn1n","VT1"] 
+  }, 
+  { 
+    region: "us-east-2", 
+    location: "US East (Ohio) — Columbus, OH", 
+    lat: 39.9612, 
+    lng: -82.9988, 
+    families: ["G4ad","G4dn","G5","G6","G6e","G6f","Gr6","Gr6f","G7e","Inf1","Inf2","P3","P4d","P5","P5e","P5en","P6-B200","Trn1","Trn1n","Trn2"] 
+  }, 
+  { 
+    region: "us-west-1", 
+    location: "US West (N. California) — Bay Area", 
+    lat: 37.8272, 
+    lng: -122.2913, 
+    families: ["G4dn","Inf1","P5","P5en"] 
+  }, 
+  { 
+    region: "us-west-2", 
+    location: "US West (Oregon)", 
+    lat: 45.5152, 
+    lng: -122.6784, 
+    families: ["DL1","DL2q","F1","F2","G4ad","G4dn","G5","G5g","G6","G6e","G6f","Gr6","Inf1","Inf2","P3","P4d","P4de","P5","P5e","P5en","P6-B200","Trn1","Trn1n","VT1"] 
+  }, 
+  { 
+    region: "ap-east-1", 
+    location: "Asia Pacific (Hong Kong)", 
+    lat: 22.3193, 
+    lng: 114.1694, 
+    families: ["G4dn","G5","Inf1"] 
+  }, 
+  { 
+    region: "ap-south-1", 
+    location: "Asia Pacific (Mumbai)", 
+    lat: 19.0760, 
+    lng: 72.8777, 
+    families: ["G4dn","G5","G6","G6f","Gr6","Gr6f","Inf1","Inf2","P4d","P5","P5en","Trn1"] 
+  }, 
+  { 
+    region: "ap-northeast-2", 
+    location: "Asia Pacific (Seoul)", 
+    lat: 37.5665, 
+    lng: 126.9780, 
+    families: ["F2","G4dn","G5","G5g","G6","G6e","G6f","Gr6","Gr6f","Inf1","Inf2","P3","P4d","P5","P5en"] 
+  }, 
+  { 
+    region: "ap-southeast-1", 
+    location: "Asia Pacific (Singapore)", 
+    lat: 1.3521, 
+    lng: 103.8198, 
+    families: ["G4dn","G5g","Inf1","Inf2","P3","P4de"] 
+  }, 
+  { 
+    region: "ap-southeast-2", 
+    location: "Asia Pacific (Sydney)", 
+    lat: -33.8688, 
+    lng: 151.2093, 
+    families: ["F1","F2","G4dn","G5","G6","G6f","Gr6","Gr6f","Inf1","Inf2","P3","P4d","P5","P5e","Trn1"] 
+  }, 
+  { 
+    region: "ap-northeast-1", 
+    location: "Asia Pacific (Tokyo)", 
+    lat: 35.6895, 
+    lng: 139.6917, 
+    families: ["F2","G4ad","G4dn","G5","G5g","G6","G6e","G6f","Gr6","Gr6f","Inf1","Inf2","P3","P3dn","P4d","P4de","P5","P5en","VT1"] 
+  }, 
+  { 
+    region: "ca-central-1", 
+    location: "Canada (Central) — Montréal, QC", 
+    lat: 45.5017, 
+    lng: -73.5673, 
+    families: ["F2","G4ad","G4dn","G5","G6","G6f","Gr6","Gr6f","Inf1","P3","P4d","P5"] 
+  }, 
+  { 
+    region: "eu-central-1", 
+    location: "Europe (Frankfurt)", 
+    lat: 50.1109, 
+    lng: 8.6821, 
+    families: ["DL2q","F1","F2","G4ad","G4dn","G5","G5g","G6","G6e","G6f","Gr6","Gr6f","Inf1","Inf2","P3","P4d","P4de"] 
+  }, 
+  { 
+    region: "eu-west-1", 
+    location: "Europe (Ireland)", 
+    lat: 53.3498, 
+    lng: -6.2603, 
+    families: ["F1","G4ad","G4dn","G5","Inf1","Inf2","P3","P3dn","P4d","VT1"] 
+  }, 
+  { 
+    region: "eu-west-2", 
+    location: "Europe (London)", 
+    lat: 51.5074, 
+    lng: -0.1278, 
+    families: ["F1","F2","G4ad","G4dn","G5","G6","G6f","Gr6","Gr6f","Inf1","Inf2","P3","P4d","P5","P5e"] 
+  }, 
+  { 
+    region: "eu-south-1", 
+    location: "Europe (Milan)", 
+    lat: 45.4642, 
+    lng: 9.1900, 
+    families: ["G4dn","Inf1"] 
+  }, 
+  { 
+    region: "eu-west-3", 
+    location: "Europe (Paris)", 
+    lat: 48.8566, 
+    lng: 2.3522, 
+    families: ["G4dn","G6","Gr6","Inf1","Inf2"] 
+  }, 
+  { 
+    region: "eu-north-1", 
+    location: "Europe (Stockholm)", 
+    lat: 59.3293, 
+    lng: 18.0686, 
+    families: ["G4dn","G5","G6","G6e","G6f","Gr6","Gr6f","Inf1","Inf2","P4d","P5","P5e","P5en"] 
+  }, 
+  { 
+    region: "me-south-1", 
+    location: "Middle East (Bahrain)", 
+    lat: 26.2235, 
+    lng: 50.5876, 
+    families: ["G4dn","Inf1"] 
+  }, 
+  { 
+    region: "sa-east-1", 
+    location: "South America (São Paulo)", 
+    lat: -23.5505, 
+    lng: -46.6333, 
+    families: ["G4dn","G5","G6","G6f","Gr6","Gr6f","Inf1","Inf2","P4d","P5","P5e","Trn2"] 
+  } 
+];
+const gpuDescriptions = {
+  // --- Google Cloud ---
+  "A4X": "NVIDIA GB200 Grace Blackwell Superchips",
+  "A4": "NVIDIA B200 Blackwell GPUs",
+  "A3 Ultra": "NVIDIA H200 SXM GPUs",
+  "A3 Mega": "NVIDIA H100 Mega SXM GPUs",
+  "A3 High": "NVIDIA H100 SXM GPUs",
+  "A3 Edge": "NVIDIA H100 SXM GPUs", // Typically H100 80GB (standard), grouped with High
+  "A2 Ultra": "NVIDIA A100 80GB GPUs",
+  "A2 Standard": "NVIDIA A100 40GB GPUs",
+  "G4": "NVIDIA RTX PRO 6000 (Blackwell)", // [Update] Confirmed Blackwell architecture
+  "G2": "NVIDIA L4",
+  "N1+T4": "NVIDIA T4 (attached to N1)",
+  "N1+V100": "NVIDIA V100 (attached to N1)",
+  "N1+P100": "NVIDIA P100 (attached to N1)",
+  "N1+P4": "NVIDIA P4 (attached to N1)",
+
+  // --- AWS P-Series (High Performance) ---
+  "P6e-GB200": "NVIDIA GB200 NVL72 (Grace Blackwell)",
+  "P6-B200": "NVIDIA Blackwell B200",
+  "P5": "NVIDIA H100",
+  "P5e": "NVIDIA H200",
+  "P5en": "NVIDIA H200 (enhanced network)",
+  "P4d": "NVIDIA A100 40GB",
+  "P4de": "NVIDIA A100 80GB",
+  "P3": "NVIDIA V100",
+  "P3dn": "NVIDIA V100 (100Gbps network)",
+
+  // --- AWS G-Series (Graphics/Inference) ---
+  "G7e": "NVIDIA RTX PRO 6000 (Blackwell)", // [Update] Confirmed Blackwell architecture
+  "G6e": "NVIDIA L40S (graphics/inference)",
+  "G6": "NVIDIA L4 (graphics/inference)",
+  "G6f": "NVIDIA L4 (fractional variant)",
+  "Gr6": "NVIDIA L4 (High RAM / AMD CPU)", // [Correction] "r" = RAM optimized. Uses AMD EPYC, not Graviton.
+  "Gr6f": "NVIDIA L4 (High RAM / AMD CPU / fractional)",
+  "G5": "NVIDIA A10G (graphics/inference)",
+  "G5g": "NVIDIA T4 (Arm/Graviton)",
+  "G4ad": "AMD Radeon Pro V520",
+  "G4dn": "NVIDIA T4",
+
+  // --- AWS Non-GPU Accelerators ---
+  "Trn1": "AWS Trainium (non-GPU)",
+  "Trn1n": "AWS Trainium (100Gbps+) (non-GPU)",
+  "Trn2": "AWS Trainium v2 (non-GPU)",
+  "Inf1": "AWS Inferentia (non-GPU)",
+  "Inf2": "AWS Inferentia2 (non-GPU)",
+  "DL1": "Habana Gaudi (non-GPU)",
+  "DL2q": "Qualcomm Cloud AI (non-GPU)",
+  "F1": "Xilinx FPGA (non-GPU)",
+  "F2": "AWS FPGA (non-GPU)",
+  "VT1": "Video transcoding (non-GPU)"
+};
+
+// Updated order to prioritize Blackwell (GB/B/RTX PRO)
+const CATEGORY_ORDER = ["GB", "B200", "RTX PRO", "H200", "H100", "L40S", "A100", "L4", "A10G", "T4", "Others"];
 
         // --- UX State ---
         let userDCs = {};
