@@ -243,6 +243,59 @@
     .winner-tie {
       background: #F3F4F6;
     }
+
+    /* Collapsible categories */
+    .category-row {
+      border: 1px solid #E5E7EB;
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    .category-row .cat-head {
+      padding: 0.5rem 0.75rem;
+      background: #F9FAFB;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .category-row .cat-head:hover {
+      background: #F3F4F6;
+    }
+
+    .category-row .cat-body {
+      padding: 0.5rem 0.75rem;
+      border-top: 1px solid #E5E7EB;
+      background: white;
+      display: none;
+    }
+
+    .category-row.expanded .cat-body {
+      display: block;
+    }
+
+    .cat-head .chevron {
+      transition: transform 0.2s;
+    }
+
+    .category-row.expanded .cat-head .chevron {
+      transform: rotate(180deg);
+    }
+
+    .reset-btn {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      border: 1px solid #D1D5DB;
+      background: white;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .reset-btn:hover {
+      background: #F3F4F6;
+      border-color: #9CA3AF;
+    }
   </style>
 </head>
 
@@ -279,12 +332,15 @@
 
       <!-- Category Filter -->
       <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Accelerator Categories</label>
+        <div class="flex justify-between items-center mb-1">
+          <label class="block text-sm font-medium text-gray-700">Accelerator Categories</label>
+          <button id="reset-filters-btn" class="reset-btn">Reset Filters</button>
+        </div>
         <p class="text-xs text-gray-500 mb-3">Filter by common NVIDIA GPU generations. Badges show cloud availability:
           <span class="chip chip-gcp">GCP</span> <span class="chip chip-aws">AWS</span> <span
             class="chip chip-azure">Azure</span>.
         </p>
-        <div id="category-filter" class="space-y-3"></div>
+        <div id="category-filter" class="space-y-2"></div>
       </div>
 
       <!-- Advanced raw type multiselect -->
@@ -652,27 +708,64 @@
       const idx = buildCategoryIndex();
       CATEGORY_ORDER.forEach(cat => {
         const row = document.createElement('div');
+        row.className = 'category-row';
         const head = document.createElement('div');
         head.className = 'cat-head';
-        const label = document.createElement('label');
-        label.className = 'text-sm font-medium text-gray-800 flex items-center cursor-pointer';
+
+        const leftSide = document.createElement('div');
+        leftSide.className = 'flex items-center';
         const cb = document.createElement('input');
         cb.type = 'checkbox';
         cb.className = 'mr-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 category-checkbox';
         cb.dataset.category = cat;
-        label.appendChild(cb);
-        label.appendChild(document.createTextNode(cat));
-        head.appendChild(label);
+        cb.addEventListener('click', e => e.stopPropagation());
+        leftSide.appendChild(cb);
+        const catName = document.createElement('span');
+        catName.className = 'text-sm font-medium text-gray-800';
+        catName.textContent = cat;
+        leftSide.appendChild(catName);
+        head.appendChild(leftSide);
+
+        const rightSide = document.createElement('div');
+        rightSide.className = 'flex items-center gap-2';
         const counts = document.createElement('div');
         counts.className = 'text-xs text-gray-500';
         const gcount = idx[cat] ? idx[cat].GCP.size : 0;
         const acount = idx[cat] ? idx[cat].AWS.size : 0;
         const azcount = idx[cat] ? idx[cat].Azure.size : 0;
         if (gcount > 0 || acount > 0 || azcount > 0) {
-          counts.innerHTML = `${gcount > 0 ? `<span class="chip chip-gcp">${gcount}</span>` : ''} ${acount > 0 ? `<span class="chip chip-aws">${acount}</span>` : ''} ${azcount > 0 ? `<span class="chip chip-azure">${azcount}</span>` : ''}`;
+          counts.innerHTML = `${gcount > 0 ? `<span class="chip chip-gcp">${gcount}</span>` : ''}${acount > 0 ? `<span class="chip chip-aws">${acount}</span>` : ''}${azcount > 0 ? `<span class="chip chip-azure">${azcount}</span>` : ''}`;
         }
-        head.appendChild(counts);
+        rightSide.appendChild(counts);
+        const chevron = document.createElement('svg');
+        chevron.className = 'chevron w-4 h-4 text-gray-400';
+        chevron.innerHTML = '<path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/>';
+        chevron.setAttribute('viewBox', '0 0 24 24');
+        chevron.setAttribute('fill', 'none');
+        rightSide.appendChild(chevron);
+        head.appendChild(rightSide);
+
+        head.addEventListener('click', () => row.classList.toggle('expanded'));
         row.appendChild(head);
+
+        // Collapsible body with type chips
+        const body = document.createElement('div');
+        body.className = 'cat-body';
+        const allTypes = new Set([...(idx[cat]?.GCP || []), ...(idx[cat]?.AWS || []), ...(idx[cat]?.Azure || [])]);
+        if (allTypes.size > 0) {
+          [...allTypes].sort().forEach(t => {
+            const chip = document.createElement('span');
+            chip.className = 'chip';
+            if (idx[cat].GCP.has(t)) chip.classList.add('chip-gcp');
+            else if (idx[cat].AWS.has(t)) chip.classList.add('chip-aws');
+            else if (idx[cat].Azure.has(t)) chip.classList.add('chip-azure');
+            chip.textContent = t;
+            body.appendChild(chip);
+          });
+        } else {
+          body.innerHTML = '<span class="text-xs text-gray-400">No types available</span>';
+        }
+        row.appendChild(body);
         container.appendChild(row);
       });
       container.querySelectorAll('.category-checkbox').forEach(cb => {
@@ -890,6 +983,14 @@
     // --- Event Listeners ---
     document.querySelectorAll('input[name="provider"]').forEach(r => r.addEventListener('change', () => { updateGpuFilter(); renderCategoryFilter(); triggerUpdate(); }));
     document.getElementById('gpu-type').addEventListener('change', triggerUpdate);
+    document.getElementById('reset-filters-btn').addEventListener('click', () => {
+      document.getElementById('provider-all').checked = true;
+      document.querySelectorAll('.category-checkbox').forEach(cb => cb.checked = false);
+      Array.from(document.getElementById('gpu-type').options).forEach(opt => opt.selected = false);
+      updateGpuFilter();
+      renderCategoryFilter();
+      triggerUpdate();
+    });
     const dcInput = document.getElementById('dc-json-input');
     const jsonStatus = document.getElementById('json-status');
     document.getElementById('update-dcs-btn').addEventListener('click', () => {
