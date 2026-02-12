@@ -99,6 +99,12 @@
       border-color: #FDE68A;
     }
 
+    .chip-azure {
+      background: #EDE9FE;
+      color: #5B21B6;
+      border-color: #DDD6FE;
+    }
+
     .cat-head {
       display: flex;
       align-items: center;
@@ -161,12 +167,81 @@
       border: 2px solid #92400E;
     }
 
+    .azure-cluster-icon {
+      background-color: rgba(139, 92, 246, 0.7);
+      border: 2px solid #5B21B6;
+    }
+
     .marker-cluster-small div,
     .marker-cluster-medium div,
     .marker-cluster-large div {
       background-color: rgba(240, 242, 245, 0.85);
       color: #333;
       font-weight: 600;
+    }
+
+    /* Comparison table modal */
+    .comparison-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .comparison-modal {
+      background: white;
+      border-radius: .75rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, .25);
+      max-width: 95vw;
+      max-height: 90vh;
+      overflow: auto;
+      padding: 1.5rem;
+    }
+
+    .comparison-modal table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: .8rem;
+    }
+
+    .comparison-modal th,
+    .comparison-modal td {
+      border: 1px solid #E5E7EB;
+      padding: .5rem .65rem;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .comparison-modal th {
+      background: #F9FAFB;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+
+    .comparison-modal td.gpu-cell {
+      white-space: normal;
+      max-width: 260px;
+      font-size: .72rem;
+    }
+
+    .winner-gcp {
+      background: #DBEAFE;
+    }
+
+    .winner-aws {
+      background: #FEF3C7;
+    }
+
+    .winner-azure {
+      background: #EDE9FE;
+    }
+
+    .winner-tie {
+      background: #F3F4F6;
     }
   </style>
 </head>
@@ -196,6 +271,9 @@
 
           <input type="radio" name="provider" value="aws" id="provider-aws" class="sr-only">
           <label for="provider-aws" class="provider-toggle-label">AWS</label>
+
+          <input type="radio" name="provider" value="azure" id="provider-azure" class="sr-only">
+          <label for="provider-azure" class="provider-toggle-label">Azure</label>
         </div>
       </div>
 
@@ -203,7 +281,8 @@
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">Accelerator Categories</label>
         <p class="text-xs text-gray-500 mb-3">Filter by common NVIDIA GPU generations. Badges show cloud availability:
-          <span class="chip chip-gcp">GCP</span> <span class="chip chip-aws">AWS</span>.
+          <span class="chip chip-gcp">GCP</span> <span class="chip chip-aws">AWS</span> <span
+            class="chip chip-azure">Azure</span>.
         </p>
         <div id="category-filter" class="space-y-3"></div>
       </div>
@@ -269,6 +348,16 @@
         </div>
       </details>
 
+      <!-- Compare All Locations Button -->
+      <div class="mb-4">
+        <button id="compare-all-btn"
+          class="w-full bg-gray-800 text-white text-sm font-medium py-2.5 px-4 rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-40 disabled:cursor-not-allowed"
+          disabled>
+          Compare All Locations
+        </button>
+        <p class="text-xs text-gray-500 mt-1">Shows a table of closest regions per provider for every location.</p>
+      </div>
+
       <hr class="my-4">
 
       <!-- Results Section -->
@@ -297,24 +386,58 @@
         class="inline-block w-3 h-3 bg-blue-500 rounded-full mr-2 border border-gray-400"></span> GCP Region</div>
     <div class="flex items-center text-xs"><span
         class="inline-block w-3 h-3 bg-yellow-500 rounded-full mr-2 border border-gray-400"></span> AWS Region</div>
+    <div class="flex items-center text-xs"><span
+        class="inline-block w-3 h-3 bg-violet-500 rounded-full mr-2 border border-gray-400"></span> Azure Region</div>
     <div class="flex items-center text-xs mt-1"><span class="inline-block w-3 h-3 mr-2">⚠️</span> <span
         class="text-gray-600">Points in the same location are slightly offset for visibility</span></div>
   </div>
-  <script src="aws.js"></script>
-  <script src="gcp.js"></script>
-
   <script>
+    // --- Data (loaded from JSON) ---
+    let gcpData = [];
+    let awsData = [];
+    let azureData = [];
+
+    async function loadData() {
+      const [gcpRaw, awsRaw, azureRaw] = await Promise.all([
+        fetch('gcp.json').then(r => r.json()),
+        fetch('aws.json').then(r => r.json()),
+        fetch('azure.json').then(r => r.json())
+      ]);
+
+      // GCP JSON has per-zone entries; consolidate per region
+      const gcpMap = new Map();
+      gcpRaw.forEach(e => {
+        if (typeof e.lat !== 'number' || typeof (e.lon ?? e.lng) !== 'number') return;
+        const key = e.region;
+        if (!gcpMap.has(key)) {
+          gcpMap.set(key, { region: e.region, location: e.location, lat: e.lat, lng: e.lon ?? e.lng, families: new Set() });
+        }
+        (e.families || []).forEach(f => gcpMap.get(key).families.add(f));
+      });
+      gcpData = [...gcpMap.values()].map(e => ({ ...e, families: [...e.families] }));
+
+      // AWS & Azure: normalize lon→lng, filter null coords
+      awsData = awsRaw
+        .filter(e => typeof e.lat === 'number' && typeof (e.lon ?? e.lng) === 'number')
+        .map(e => ({ region: e.region, location: e.location, lat: e.lat, lng: e.lon ?? e.lng, families: e.families || [] }));
+
+      azureData = azureRaw
+        .filter(e => typeof e.lat === 'number' && typeof (e.lon ?? e.lng) === 'number')
+        .map(e => ({ region: e.region, location: e.location, lat: e.lat, lng: e.lon ?? e.lng, families: e.families || [] }));
+    }
+
     const gpuDescriptions = {
       // --- Google Cloud ---
       "A4X": "NVIDIA GB200 Grace Blackwell Superchips",
+      "A4X Max": "NVIDIA GB200 Grace Blackwell Superchips (Max)",
       "A4": "NVIDIA B200 Blackwell GPUs",
       "A3 Ultra": "NVIDIA H200 SXM GPUs",
       "A3 Mega": "NVIDIA H100 Mega SXM GPUs",
       "A3 High": "NVIDIA H100 SXM GPUs",
-      "A3 Edge": "NVIDIA H100 SXM GPUs", // Typically H100 80GB (standard), grouped with High
+      "A3 Edge": "NVIDIA H100 SXM GPUs",
       "A2 Ultra": "NVIDIA A100 80GB GPUs",
       "A2 Standard": "NVIDIA A100 40GB GPUs",
-      "G4": "NVIDIA RTX PRO 6000 (Blackwell)", // [Update] Confirmed Blackwell architecture
+      "G4": "NVIDIA RTX PRO 6000 (Blackwell)",
       "G2": "NVIDIA L4",
       "N1+T4": "NVIDIA T4 (attached to N1)",
       "N1+V100": "NVIDIA V100 (attached to N1)",
@@ -333,11 +456,11 @@
       "P3dn": "NVIDIA V100 (100Gbps network)",
 
       // --- AWS G-Series (Graphics/Inference) ---
-      "G7e": "NVIDIA RTX PRO 6000 (Blackwell)", // [Update] Confirmed Blackwell architecture
+      "G7e": "NVIDIA RTX PRO 6000 (Blackwell)",
       "G6e": "NVIDIA L40S (graphics/inference)",
       "G6": "NVIDIA L4 (graphics/inference)",
       "G6f": "NVIDIA L4 (fractional variant)",
-      "Gr6": "NVIDIA L4 (High RAM / AMD CPU)", // [Correction] "r" = RAM optimized. Uses AMD EPYC, not Graviton.
+      "Gr6": "NVIDIA L4 (High RAM / AMD CPU)",
       "Gr6f": "NVIDIA L4 (High RAM / AMD CPU / fractional)",
       "G5": "NVIDIA A10G (graphics/inference)",
       "G5g": "NVIDIA T4 (Arm/Graviton)",
@@ -354,7 +477,25 @@
       "DL2q": "Qualcomm Cloud AI (non-GPU)",
       "F1": "Xilinx FPGA (non-GPU)",
       "F2": "AWS FPGA (non-GPU)",
-      "VT1": "Video transcoding (non-GPU)"
+      "VT1": "Video transcoding (non-GPU)",
+
+      // --- Azure N-Series ---
+      "NCads A100 v4-Series": "NVIDIA A100 80GB",
+      "NCadsH100_v5-series": "NVIDIA H100",
+      "NCCadsH100_v5-series": "NVIDIA H100 (Confidential)",
+      "NCas T4 v3-Series": "NVIDIA T4",
+      "NCv3-Series": "NVIDIA V100",
+      "NDsr H100 v5-Series": "NVIDIA H100 SXM",
+      "NDsr H200 v5-Series": "NVIDIA H200 SXM",
+      "NDsr MI300X v5-Series": "AMD Instinct MI300X",
+      "NDamsr A100 v4-Series": "NVIDIA A100 80GB (InfiniBand)",
+      "NDasr A100 v4-Series": "NVIDIA A100 80GB (InfiniBand)",
+      "NDv2-Series": "NVIDIA V100 (32GB)",
+      "NVadsA10_v5-series": "NVIDIA A10",
+      "NVads_V710_v5-series": "AMD Radeon PRO V710",
+      "NGads_V620_v1-series": "AMD Radeon PRO V620",
+      "NVv3-Series": "NVIDIA Tesla M60",
+      "NVv4-Series": "AMD Radeon Instinct MI25"
     };
 
     // Updated order to prioritize Blackwell (GB/B/RTX PRO)
@@ -377,11 +518,39 @@
     const dcLayer = L.layerGroup().addTo(map);
     const gcpLayer = L.markerClusterGroup({ maxClusterRadius: 30, iconCreateFunction: cluster => L.divIcon({ html: `<div><span>${cluster.getChildCount()}</span></div>`, className: 'marker-cluster gcp-cluster-icon', iconSize: new L.Point(40, 40) }), spiderfyOnMaxZoom: true, showCoverageOnHover: false, zoomToBoundsOnClick: true, disableClusteringAtZoom: 8 }).addTo(map);
     const awsLayer = L.markerClusterGroup({ maxClusterRadius: 30, iconCreateFunction: cluster => L.divIcon({ html: `<div><span>${cluster.getChildCount()}</span></div>`, className: 'marker-cluster aws-cluster-icon', iconSize: new L.Point(40, 40) }), spiderfyOnMaxZoom: true, showCoverageOnHover: false, zoomToBoundsOnClick: true, disableClusteringAtZoom: 8 }).addTo(map);
+    const azureLayer = L.markerClusterGroup({ maxClusterRadius: 30, iconCreateFunction: cluster => L.divIcon({ html: `<div><span>${cluster.getChildCount()}</span></div>`, className: 'marker-cluster azure-cluster-icon', iconSize: new L.Point(40, 40) }), spiderfyOnMaxZoom: true, showCoverageOnHover: false, zoomToBoundsOnClick: true, disableClusteringAtZoom: 8 }).addTo(map);
     const linesLayer = L.layerGroup().addTo(map);
 
     // --- Helper Functions ---
-    function categorize(type, provider) { switch (type) { case 'A4X': case 'A4X Max': case 'P6e-GB200': return 'GB'; case 'A4': case 'P6-B200': return 'B200'; case 'G4': case 'G7e': return 'RTX PRO'; case 'A3 Ultra': case 'P5e': case 'P5en': return 'H200'; case 'A3 Mega': case 'A3 High': case 'A3 Edge': case 'P5': return 'H100'; case 'G6e': return 'L40S'; case 'A2 Ultra': case 'A2 Standard': case 'P4d': case 'P4de': return 'A100'; case 'G2': case 'G6': case 'G6f': case 'Gr6': case 'Gr6f': return 'L4'; case 'G5': return 'A10G'; case 'N1+T4': case 'G4dn': case 'G5g': return 'T4'; default: return 'Others'; } }
-    function buildCategoryIndex() { const index = {}; CATEGORY_ORDER.forEach(c => index[c] = { GCP: new Set(), AWS: new Set() }); gcpData.forEach(dc => { Object.keys(dc.zones || {}).forEach(t => { const cat = categorize(t, 'GCP'); index[cat] ||= { GCP: new Set(), AWS: new Set() }; index[cat].GCP.add(t); }); }); awsData.forEach(dc => { (dc.families || []).forEach(t => { const cat = categorize(t, 'AWS'); index[cat] ||= { GCP: new Set(), AWS: new Set() }; index[cat].AWS.add(t); }); }); return index; }
+    function categorize(type, provider) {
+      switch (type) {
+        case 'A4X': case 'A4X Max': case 'P6e-GB200': return 'GB';
+        case 'A4': case 'P6-B200': return 'B200';
+        case 'G4': case 'G7e': return 'RTX PRO';
+        case 'A3 Ultra': case 'P5e': case 'P5en':
+        case 'NDsr H200 v5-Series':
+          return 'H200';
+        case 'A3 Mega': case 'A3 High': case 'A3 Edge': case 'P5':
+        case 'NCadsH100_v5-series': case 'NCCadsH100_v5-series': case 'NDsr H100 v5-Series':
+          return 'H100';
+        case 'G6e': return 'L40S';
+        case 'A2 Ultra': case 'A2 Standard': case 'P4d': case 'P4de':
+        case 'NCads A100 v4-Series': case 'NDamsr A100 v4-Series': case 'NDasr A100 v4-Series':
+          return 'A100';
+        case 'G2': case 'G6': case 'G6f': case 'Gr6': case 'Gr6f': return 'L4';
+        case 'G5': case 'NVadsA10_v5-series': return 'A10G';
+        case 'N1+T4': case 'G4dn': case 'G5g': case 'NCas T4 v3-Series': return 'T4';
+        default: return 'Others';
+      }
+    }
+    function buildCategoryIndex() {
+      const index = {};
+      CATEGORY_ORDER.forEach(c => index[c] = { GCP: new Set(), AWS: new Set(), Azure: new Set() });
+      gcpData.forEach(dc => { (dc.families || []).forEach(t => { const cat = categorize(t, 'GCP'); index[cat] ||= { GCP: new Set(), AWS: new Set(), Azure: new Set() }; index[cat].GCP.add(t); }); });
+      awsData.forEach(dc => { (dc.families || []).forEach(t => { const cat = categorize(t, 'AWS'); index[cat] ||= { GCP: new Set(), AWS: new Set(), Azure: new Set() }; index[cat].AWS.add(t); }); });
+      azureData.forEach(dc => { (dc.families || []).forEach(t => { const cat = categorize(t, 'Azure'); index[cat] ||= { GCP: new Set(), AWS: new Set(), Azure: new Set() }; index[cat].Azure.add(t); }); });
+      return index;
+    }
     function getDistance(lat1, lon1, lat2, lon2) { const R = 6371; const dLat = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180; const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2; return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); }
 
     // --- URL State Management ---
@@ -490,8 +659,9 @@
         counts.className = 'text-xs text-gray-500';
         const gcount = idx[cat] ? idx[cat].GCP.size : 0;
         const acount = idx[cat] ? idx[cat].AWS.size : 0;
-        if (gcount > 0 || acount > 0) {
-          counts.innerHTML = `${gcount > 0 ? `<span class="chip chip-gcp">${gcount}</span>` : ''} ${acount > 0 ? `<span class="chip chip-aws">${acount}</span>` : ''}`;
+        const azcount = idx[cat] ? idx[cat].Azure.size : 0;
+        if (gcount > 0 || acount > 0 || azcount > 0) {
+          counts.innerHTML = `${gcount > 0 ? `<span class="chip chip-gcp">${gcount}</span>` : ''} ${acount > 0 ? `<span class="chip chip-aws">${acount}</span>` : ''} ${azcount > 0 ? `<span class="chip chip-azure">${azcount}</span>` : ''}`;
         }
         head.appendChild(counts);
         row.appendChild(head);
@@ -511,8 +681,9 @@
       const selected = new Set(Array.from(sel.selectedOptions).map(o => o.value));
       sel.innerHTML = '';
       const types = new Set();
-      if (provider === 'all' || provider === 'gcp') { gcpData.forEach(dc => { Object.keys(dc.zones || {}).forEach(t => types.add(t)); }); }
+      if (provider === 'all' || provider === 'gcp') { gcpData.forEach(dc => (dc.families || []).forEach(t => types.add(t))); }
       if (provider === 'all' || provider === 'aws') { awsData.forEach(dc => (dc.families || []).forEach(t => types.add(t))); }
+      if (provider === 'all' || provider === 'azure') { azureData.forEach(dc => (dc.families || []).forEach(t => types.add(t))); }
       [...types].sort().forEach(t => {
         const opt = document.createElement('option');
         opt.value = t;
@@ -534,6 +705,7 @@
         if (!idx[cat]) return;
         idx[cat].GCP.forEach(t => out.add(t));
         idx[cat].AWS.forEach(t => out.add(t));
+        idx[cat].Azure.forEach(t => out.add(t));
       });
       return [...out];
     }
@@ -548,6 +720,7 @@
         if (!idx[cat]) return;
         idx[cat].GCP.forEach(t => selectedTypes.add(t));
         idx[cat].AWS.forEach(t => selectedTypes.add(t));
+        idx[cat].Azure.forEach(t => selectedTypes.add(t));
       });
       Array.from(sel.options).forEach(o => { o.selected = selectedTypes.has(o.value); });
     }
@@ -580,6 +753,7 @@
       dcLayer.clearLayers();
       gcpLayer.clearLayers();
       awsLayer.clearLayers();
+      azureLayer.clearLayers();
       dcMarkers = {};
 
       const provider = document.querySelector('input[name="provider"]:checked').value;
@@ -608,37 +782,24 @@
         dcMarkers[name] = marker;
       }
 
-      // GCP markers
-      if (provider === 'all' || provider === 'gcp') {
-        gcpLayer.clearLayers();
-        gcpData.forEach(dc => {
-          const accelTypes = Object.keys(dc.zones || {});
-          const show = selectedTypes.length === 0 || accelTypes.some(t => selectedTypes.includes(t));
-          if (!show) return;
-          const marker = L.marker([dc.lat, dc.lng], { icon: L.divIcon({ className: 'custom-div-icon', html: `<div style="background-color:#3B82F6; width:12px; height:12px; border-radius:50%; border:1px solid #1E40AF;"></div>`, iconSize: [12, 12], iconAnchor: [6, 6] }) });
-          let popup = `<div class='mono'><b>GCP</b> — ${dc.location}<br><span class='text-xs'>Region <code>${dc.region}</code></span><hr class='my-2' />`;
-          if (accelTypes.length === 0) { popup += `<i>No GPU/accelerator zones listed.</i>`; } else { accelTypes.sort().forEach(t => { const z = dc.zones[t]; popup += `• <b>${t}</b> <span class='gpu-info'>${gpuDescriptions[t] || ''}</span><br><span class='text-xs text-gray-500'>Zones: ${z.join(', ')}</span><br>`; }); }
-          popup += `</div>`;
-          marker.bindPopup(popup);
-          gcpLayer.addLayer(marker);
-        });
-      }
-
-      // AWS markers
-      if (provider === 'all' || provider === 'aws') {
-        awsLayer.clearLayers();
-        awsData.forEach(dc => {
+      // Helper to render provider markers
+      function renderProviderMarkers(data, layer, providerName, bgColor, borderColor) {
+        data.forEach(dc => {
           const fams = dc.families || [];
           const show = selectedTypes.length === 0 || fams.some(f => selectedTypes.includes(f));
           if (!show) return;
-          const marker = L.marker([dc.lat, dc.lng], { icon: L.divIcon({ className: 'custom-div-icon', html: `<div style="background-color:#F59E0B; width:12px; height:12px; border-radius:50%; border:1px solid #92400E;"></div>`, iconSize: [12, 12], iconAnchor: [6, 6] }) });
-          let popup = `<div class='mono'><b>AWS</b> — ${dc.location}<br><span class='text-xs'>Region <code>${dc.region}</code></span><hr class='my-2' />`;
-          if (fams.length === 0) { popup += `<i>No accelerated instance families listed.</i>`; } else { fams.sort().forEach(f => { popup += `• <b>${f}</b> <span class='gpu-info'>${gpuDescriptions[f] || ''}</span><br>`; }); }
+          const marker = L.marker([dc.lat, dc.lng], { icon: L.divIcon({ className: 'custom-div-icon', html: `<div style="background-color:${bgColor}; width:12px; height:12px; border-radius:50%; border:1px solid ${borderColor};"></div>`, iconSize: [12, 12], iconAnchor: [6, 6] }) });
+          let popup = `<div class='mono'><b>${providerName}</b> — ${dc.location}<br><span class='text-xs'>Region <code>${dc.region}</code></span><hr class='my-2' />`;
+          if (fams.length === 0) { popup += `<i>No accelerator families listed.</i>`; } else { fams.sort().forEach(f => { popup += `• <b>${f}</b> <span class='gpu-info'>${gpuDescriptions[f] || ''}</span><br>`; }); }
           popup += `</div>`;
           marker.bindPopup(popup);
-          awsLayer.addLayer(marker);
+          layer.addLayer(marker);
         });
       }
+
+      if (provider === 'all' || provider === 'gcp') renderProviderMarkers(gcpData, gcpLayer, 'GCP', '#3B82F6', '#1E40AF');
+      if (provider === 'all' || provider === 'aws') renderProviderMarkers(awsData, awsLayer, 'AWS', '#F59E0B', '#92400E');
+      if (provider === 'all' || provider === 'azure') renderProviderMarkers(azureData, azureLayer, 'Azure', '#8B5CF6', '#5B21B6');
     }
 
     function updateResults(dcName, lat, lng) {
@@ -657,11 +818,17 @@
       const selectedTypes = getSelectedAcceleratorTypes();
       const rows = [];
 
-      function considerGCP(dc) { const types = Object.keys(dc.zones || {}); const matches = selectedTypes.length === 0 ? types : types.filter(t => selectedTypes.includes(t)); if (matches.length === 0 && selectedTypes.length > 0) return; const dist = getDistance(lat, lng, dc.lat, dc.lng); rows.push({ provider: 'GCP', region: dc.region, location: dc.location, distance: dist, detail: matches.join(', '), lat: dc.lat, lng: dc.lng }); }
-      function considerAWS(dc) { const fams = dc.families || []; const matches = selectedTypes.length === 0 ? fams : fams.filter(f => selectedTypes.includes(f)); if (matches.length === 0 && selectedTypes.length > 0) return; const dist = getDistance(lat, lng, dc.lat, dc.lng); rows.push({ provider: 'AWS', region: dc.region, location: dc.location, distance: dist, detail: matches.join(', '), lat: dc.lat, lng: dc.lng }); }
+      function considerDC(dc, providerName) {
+        const fams = dc.families || [];
+        const matches = selectedTypes.length === 0 ? fams : fams.filter(f => selectedTypes.includes(f));
+        if (matches.length === 0 && selectedTypes.length > 0) return;
+        const dist = getDistance(lat, lng, dc.lat, dc.lng);
+        rows.push({ provider: providerName, region: dc.region, location: dc.location, distance: dist, detail: matches.join(', '), lat: dc.lat, lng: dc.lng });
+      }
 
-      if (provider === 'all' || provider === 'gcp') gcpData.forEach(considerGCP);
-      if (provider === 'all' || provider === 'aws') awsData.forEach(considerAWS);
+      if (provider === 'all' || provider === 'gcp') gcpData.forEach(dc => considerDC(dc, 'GCP'));
+      if (provider === 'all' || provider === 'aws') awsData.forEach(dc => considerDC(dc, 'AWS'));
+      if (provider === 'all' || provider === 'azure') azureData.forEach(dc => considerDC(dc, 'Azure'));
 
       rows.sort((a, b) => a.distance - b.distance);
       linesLayer.clearLayers();
@@ -677,7 +844,8 @@
       rows.slice(0, 5).forEach((r, index) => {
         const li = document.createElement('li');
         li.className = 'p-3 bg-gray-50 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer';
-        const badge = r.provider === 'GCP' ? '<span class="chip chip-gcp">GCP</span>' : '<span class="chip chip-aws">AWS</span>';
+        const badges = { GCP: '<span class="chip chip-gcp">GCP</span>', AWS: '<span class="chip chip-aws">AWS</span>', Azure: '<span class="chip chip-azure">Azure</span>' };
+        const badge = badges[r.provider] || r.provider;
         li.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div>${badge} <span class='mono'><code>${r.region}</code></span></div>
@@ -687,7 +855,8 @@
                     <div class='text-xs text-gray-500 mt-1 truncate'>Matches: ${r.detail || 'All types'}</div>`;
         ul.appendChild(li);
 
-        const polyline = L.polyline([[lat, lng], [r.lat, r.lng]], { color: r.provider === 'GCP' ? '#3B82F6' : '#F59E0B', weight: 2, opacity: 0.6, dashArray: '5, 5' }).addTo(linesLayer);
+        const lineColors = { GCP: '#3B82F6', AWS: '#F59E0B', Azure: '#8B5CF6' };
+        const polyline = L.polyline([[lat, lng], [r.lat, r.lng]], { color: lineColors[r.provider] || '#666', weight: 2, opacity: 0.6, dashArray: '5, 5' }).addTo(linesLayer);
         li.addEventListener('mouseenter', () => polyline.setStyle({ weight: 4, opacity: 1 }));
         li.addEventListener('mouseleave', () => polyline.setStyle({ weight: 2, opacity: 0.6 }));
       });
@@ -732,6 +901,7 @@
         jsonStatus.textContent = `Updated with ${Object.keys(userDCs).length} locations.`;
         jsonStatus.className = 'text-xs text-green-600';
         resetSelection();
+        updateCompareButtonState();
       } catch (e) {
         dcInput.classList.add('border-red-500');
         dcInput.classList.remove('border-gray-300');
@@ -740,11 +910,150 @@
       }
     });
 
+    // --- Compare All Locations ---
+    function updateCompareButtonState() {
+      const btn = document.getElementById('compare-all-btn');
+      btn.disabled = Object.keys(userDCs).length === 0;
+    }
+
+    function generateComparisonTable() {
+      const locations = Object.entries(userDCs).filter(([, c]) => typeof c.lat === 'number' && typeof c.lng === 'number');
+      if (locations.length === 0) return;
+
+      const provider = document.querySelector('input[name="provider"]:checked').value;
+      const selectedTypes = getSelectedAcceleratorTypes();
+      const showGCP = provider === 'all' || provider === 'gcp';
+      const showAWS = provider === 'all' || provider === 'aws';
+      const showAzure = provider === 'all' || provider === 'azure';
+      const visibleProviders = [showGCP && 'GCP', showAWS && 'AWS', showAzure && 'Azure'].filter(Boolean);
+
+      function findClosest(lat, lng, data) {
+        let best = null;
+        data.forEach(dc => {
+          const fams = dc.families || [];
+          const matches = selectedTypes.length === 0 ? fams : fams.filter(t => selectedTypes.includes(t));
+          if (matches.length === 0 && selectedTypes.length > 0) return;
+          const dist = getDistance(lat, lng, dc.lat, dc.lng);
+          if (!best || dist < best.distance) {
+            best = { region: dc.region, location: dc.location, distance: dist, gpus: matches };
+          }
+        });
+        return best;
+      }
+
+      // Build rows
+      const rows = locations.map(([name, c]) => {
+        const bests = {};
+        if (showGCP) bests.GCP = findClosest(c.lat, c.lng, gcpData);
+        if (showAWS) bests.AWS = findClosest(c.lat, c.lng, awsData);
+        if (showAzure) bests.Azure = findClosest(c.lat, c.lng, azureData);
+        // Determine closest provider
+        let closer = '—';
+        const validBests = Object.entries(bests).filter(([, v]) => v);
+        if (validBests.length > 1) {
+          validBests.sort((a, b) => a[1].distance - b[1].distance);
+          closer = validBests[0][1].distance < validBests[1][1].distance ? validBests[0][0] : 'Tie';
+        } else if (validBests.length === 1) {
+          closer = validBests[0][0];
+        }
+        return { name, bests, closer };
+      });
+
+      const chipClasses = { GCP: 'chip-gcp', AWS: 'chip-aws', Azure: 'chip-azure' };
+      const distHighlight = { GCP: 'text-blue-700 font-semibold', AWS: 'text-amber-700 font-semibold', Azure: 'text-violet-700 font-semibold' };
+      const winClasses = { GCP: 'winner-gcp', AWS: 'winner-aws', Azure: 'winner-azure', Tie: 'winner-tie' };
+
+      // Build HTML
+      let html = `<div class="comparison-overlay" id="comparison-overlay">`;
+      html += `<div class="comparison-modal">`;
+      html += `<div class="flex justify-between items-center mb-3">`;
+      html += `<h3 class="text-lg font-bold text-gray-800">Location Comparison</h3>`;
+      html += `<div class="flex items-center gap-2">`;
+      html += `<button id="copy-md-btn" class="text-xs font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 py-1.5 px-3 rounded-md border border-gray-300 transition-colors">Copy as MD</button>`;
+      html += `<button id="close-comparison-btn" class="text-gray-400 hover:text-gray-700 text-xl font-bold leading-none">&times;</button>`;
+      html += `</div>`;
+      html += `</div>`;
+      html += `<table><thead><tr>`;
+      html += `<th>Your Location</th>`;
+      visibleProviders.forEach(p => {
+        html += `<th><span class="chip ${chipClasses[p]}">${p}</span> Region</th><th>Dist</th><th class="gpu-cell">GPUs</th>`;
+      });
+      if (visibleProviders.length > 1) html += `<th>Closer</th>`;
+      html += `</tr></thead><tbody>`;
+
+      rows.forEach(r => {
+        const winClass = winClasses[r.closer] || 'winner-tie';
+        html += `<tr>`;
+        html += `<td class="font-medium">${r.name}</td>`;
+        visibleProviders.forEach(p => {
+          const best = r.bests[p];
+          if (best) {
+            html += `<td><code class="text-xs">${best.region}</code><br><span class="text-xs text-gray-500">${best.location}</span></td>`;
+            html += `<td class="${r.closer === p ? distHighlight[p] : ''}">${best.distance.toFixed(0)} km</td>`;
+            html += `<td class="gpu-cell">${best.gpus.map(g => `<span class="chip ${chipClasses[p]}">${g}</span>`).join(' ')}</td>`;
+          } else {
+            html += `<td colspan="3" class="text-gray-400 text-center">No match</td>`;
+          }
+        });
+        if (visibleProviders.length > 1) {
+          html += `<td class="${winClass} font-bold text-center">${r.closer}</td>`;
+        }
+        html += `</tr>`;
+      });
+
+      html += `</tbody></table></div></div>`;
+
+      // Remove existing overlay if any
+      const existing = document.getElementById('comparison-overlay');
+      if (existing) existing.remove();
+
+      document.body.insertAdjacentHTML('beforeend', html);
+
+      // Build Markdown string
+      let md = '';
+      const mdHeader = ['Location'];
+      visibleProviders.forEach(p => mdHeader.push(`${p} Region`, `${p} Dist`, `${p} GPUs`));
+      if (visibleProviders.length > 1) mdHeader.push('Closer');
+      md += '| ' + mdHeader.join(' | ') + ' |\n';
+      md += '| ' + mdHeader.map(() => '---').join(' | ') + ' |\n';
+      rows.forEach(r => {
+        const cols = [r.name];
+        visibleProviders.forEach(p => {
+          const best = r.bests[p];
+          if (best) {
+            cols.push(`\`${best.region}\``, `${best.distance.toFixed(0)} km`, best.gpus.join(', '));
+          } else { cols.push('—', '—', '—'); }
+        });
+        if (visibleProviders.length > 1) cols.push(`**${r.closer}**`);
+        md += '| ' + cols.join(' | ') + ' |\n';
+      });
+
+      // Close handlers
+      document.getElementById('close-comparison-btn').addEventListener('click', () => document.getElementById('comparison-overlay').remove());
+      document.getElementById('comparison-overlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.remove(); });
+
+      // Copy as Markdown handler
+      document.getElementById('copy-md-btn').addEventListener('click', () => {
+        navigator.clipboard.writeText(md).then(() => {
+          const btn = document.getElementById('copy-md-btn');
+          btn.textContent = 'Copied!';
+          btn.classList.add('bg-green-100', 'text-green-700', 'border-green-300');
+          setTimeout(() => { btn.textContent = 'Copy as MD'; btn.classList.remove('bg-green-100', 'text-green-700', 'border-green-300'); }, 2000);
+        });
+      });
+    }
+
+    document.getElementById('compare-all-btn').addEventListener('click', generateComparisonTable);
+
     // --- Initial Setup ---
-    updateGpuFilter();
-    renderCategoryFilter();
-    updateMap();
-    loadStateFromUrl(); // Load state from URL on page load
+    (async function init() {
+      await loadData();
+      updateGpuFilter();
+      renderCategoryFilter();
+      updateMap();
+      loadStateFromUrl();
+      updateCompareButtonState();
+    })();
   </script>
 </body>
 
