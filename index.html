@@ -312,6 +312,11 @@
       </button>
     </div>
     <div id="panel-content">
+      <!-- Reset Filters -->
+      <div class="mb-4 flex justify-end">
+        <button id="reset-filters-btn" class="reset-btn">Reset Filters</button>
+      </div>
+
       <!-- Cloud Provider Filter -->
       <div class="mb-5">
         <label class="block text-sm font-medium text-gray-700 mb-2">Cloud Provider</label>
@@ -331,17 +336,18 @@
       </div>
 
       <!-- Category Filter -->
-      <div class="mb-4">
-        <div class="flex justify-between items-center mb-1">
-          <label class="block text-sm font-medium text-gray-700">Accelerator Categories</label>
-          <button id="reset-filters-btn" class="reset-btn">Reset Filters</button>
+      <details class="mb-4" open>
+        <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+          Accelerator Categories
+        </summary>
+        <div class="mt-2">
+          <p class="text-xs text-gray-500 mb-3">Filter by common NVIDIA GPU generations. Badges show cloud availability:
+            <span class="chip chip-gcp">GCP</span> <span class="chip chip-aws">AWS</span> <span
+              class="chip chip-azure">Azure</span>.
+          </p>
+          <div id="category-filter" class="space-y-2"></div>
         </div>
-        <p class="text-xs text-gray-500 mb-3">Filter by common NVIDIA GPU generations. Badges show cloud availability:
-          <span class="chip chip-gcp">GCP</span> <span class="chip chip-aws">AWS</span> <span
-            class="chip chip-azure">Azure</span>.
-        </p>
-        <div id="category-filter" class="space-y-2"></div>
-      </div>
+      </details>
 
       <!-- Advanced raw type multiselect -->
       <details class="mb-4">
@@ -990,6 +996,12 @@
       updateGpuFilter();
       renderCategoryFilter();
       triggerUpdate();
+      // Clear URL state (keep only locations if present)
+      const params = new URLSearchParams(window.location.search);
+      const locations = params.get('locations');
+      const newParams = new URLSearchParams();
+      if (locations) newParams.set('locations', locations);
+      history.replaceState({}, '', `${window.location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`);
     });
     const dcInput = document.getElementById('dc-json-input');
     const jsonStatus = document.getElementById('json-status');
