@@ -44,10 +44,10 @@ Example:
 
 ## Data Sources
 
-1. GCP: [GPU regions and zones](https://cloud.google.com/compute/docs/gpus/gpu-regions-zones). Availability is zone-granular.
-2. AWS: [Amazon EC2 instance types by Region](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-regions.html). Availability is region-granular.
-3. Azure: todo
+1. GCP: [GPU regions and zones](https://cloud.google.com/compute/docs/gpus/gpu-regions-zones).
+2. AWS: [Amazon EC2 instance types by Region](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-regions.html).
+3. Azure: [Product Availability Per Region](https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/table).
 
 > [!NOTE]
 > Coordinates represent the approximate center of the region or its reference city as listed in the official documentation.
-> Data was last updated August 2025.
+> Data was last updated Feb 2026.

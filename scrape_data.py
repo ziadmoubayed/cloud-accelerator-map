@@ -162,7 +162,7 @@ def get_gcp_data():
         raw_gpus = cols[2].get_text(separator="|", strip=True)
         # This regex splits by the bullet '•' or the pipe we inserted, then cleans whitespace
         gpu_list = [
-            re.sub(r"\s+", " ", g).strip()
+            re.sub(r"\s+", " ", g).strip().replace("*", " (Limited availability)")
             for g in re.split(r"[•|]", raw_gpus)
             if g.strip()
         ]
@@ -266,6 +266,7 @@ def get_azure_data():
 
         cleaned_data = []
         reserved_regions = ("china-east-3", "australia-central-2", "korea-south")
+        # https://datacenters.microsoft.com/globe/explore/?view=table
         for region in region_locations:
             if region.startswith("usgov") or region in reserved_regions:
                 continue
