@@ -296,6 +296,62 @@
       background: #F3F4F6;
       border-color: #9CA3AF;
     }
+
+    /* Tabbed interface */
+    .panel-tabs {
+      display: flex;
+      border-bottom: 1px solid #E5E7EB;
+      margin-bottom: 1rem;
+    }
+
+    .panel-tab {
+      flex: 1;
+      padding: 0.625rem 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #6B7280;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .panel-tab:hover {
+      color: #374151;
+    }
+
+    .panel-tab.active {
+      color: #4F46E5;
+      border-bottom-color: #4F46E5;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .location-hint {
+      background: #F0FDF4;
+      border: 1px solid #BBF7D0;
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .location-hint-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: #22C55E;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+    }
   </style>
 </head>
 
@@ -312,94 +368,55 @@
       </button>
     </div>
     <div id="panel-content">
-      <!-- Reset Filters -->
-      <div class="mb-4 flex justify-end">
-        <button id="reset-filters-btn" class="reset-btn">Reset Filters</button>
+      <!-- Tab Navigation -->
+      <div class="panel-tabs">
+        <button class="panel-tab active" data-tab="locations">Your Locations</button>
+        <button class="panel-tab" data-tab="filters">Filters</button>
       </div>
 
-      <!-- Cloud Provider Filter -->
-      <div class="mb-5">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Cloud Provider</label>
-        <div id="provider-radios" class="flex flex-wrap gap-2">
-          <input type="radio" name="provider" value="all" id="provider-all" class="sr-only" checked>
-          <label for="provider-all" class="provider-toggle-label">All</label>
-
-          <input type="radio" name="provider" value="gcp" id="provider-gcp" class="sr-only">
-          <label for="provider-gcp" class="provider-toggle-label">GCP</label>
-
-          <input type="radio" name="provider" value="aws" id="provider-aws" class="sr-only">
-          <label for="provider-aws" class="provider-toggle-label">AWS</label>
-
-          <input type="radio" name="provider" value="azure" id="provider-azure" class="sr-only">
-          <label for="provider-azure" class="provider-toggle-label">Azure</label>
+      <!-- Locations Tab -->
+      <div id="tab-locations" class="tab-content active">
+        <!-- Getting Started Hint -->
+        <div class="location-hint">
+          <div class="flex items-start">
+            <span class="location-hint-icon flex-shrink-0">
+              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                  clip-rule="evenodd" />
+              </svg>
+            </span>
+            <div>
+              <p class="text-sm font-medium text-green-800">Add your data center locations</p>
+              <p class="text-xs text-green-700 mt-0.5">Enter coordinates below, then click markers on the map to find
+                the nearest cloud GPU regions.</p>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <!-- Category Filter -->
-      <details class="mb-4" open>
-        <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
-          Accelerator Categories
-        </summary>
-        <div class="mt-2">
-          <p class="text-xs text-gray-500 mb-3">Filter by common NVIDIA GPU generations. Badges show cloud availability:
-            <span class="chip chip-gcp">GCP</span> <span class="chip chip-aws">AWS</span> <span
-              class="chip chip-azure">Azure</span>.
-          </p>
-          <div id="category-filter" class="space-y-2"></div>
-        </div>
-      </details>
-
-      <!-- Advanced raw type multiselect -->
-      <details class="mb-4">
-        <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
-          Advanced: Filter by Raw Type
-        </summary>
-        <div class="mt-2">
-          <select id="gpu-type" multiple
-            class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md h-40"></select>
-          <p class="text-xs text-gray-500 mt-2">Hold Cmd/Ctrl to select multiple. Selections here are combined with the
-            category filters above.</p>
-        </div>
-      </details>
-
-      <hr class="my-4">
-
-      <!-- Custom Locations Input -->
-      <details class="mb-4" open>
-        <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
-          Your Locations (Data Centers)
-        </summary>
-        <div class="mt-2">
-          <div class="flex items-center mb-1">
-            <label for="dc-json-input" class="block text-xs text-gray-600">Paste your locations as a JSON object
-              below.</label>
-            <div class="relative flex flex-col items-center group ml-2">
+        <!-- Location Input -->
+        <div class="mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <label for="dc-json-input" class="block text-sm font-medium text-gray-700">Location Coordinates</label>
+            <div class="relative flex flex-col items-center group">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 cursor-help" fill="none"
                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round"
                   d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <div class="absolute bottom-0 flex-col items-center hidden mb-5 w-64 group-hover:flex">
+              <div class="absolute bottom-0 right-0 flex-col items-center hidden mb-5 w-64 group-hover:flex z-20">
                 <div class="relative z-10 p-3 text-xs leading-none text-white bg-gray-800 shadow-lg rounded-md">
-                  <h4 class="font-bold mb-1 text-gray-200">Expected JSON format:</h4>
-                  <p class="text-gray-300 mb-2">An object where keys are location names and values are objects with
-                    `lat` and `lng` properties.</p>
+                  <h4 class="font-bold mb-1 text-gray-200">JSON format:</h4>
                   <pre class="text-left text-xs bg-gray-900 p-2 rounded"><code>{
-  "Amsterdam, NL": {
-    "lat": 52.36,
-    "lng": 4.90
-  },
-  "San Jose, US": {
-    "lat": 37.33,
-    "lng": -121.88
-  }
+  "Name": {"lat": 52.36, "lng": 4.90}
 }</code></pre>
                 </div>
                 <div class="w-3 h-3 -mt-2 rotate-45 bg-gray-800"></div>
               </div>
             </div>
           </div>
-          <textarea id="dc-json-input" rows="6"
+          <textarea id="dc-json-input" rows="5"
+            placeholder='{"Amsterdam, NL": {"lat": 52.36, "lng": 4.90}, "San Jose, US": {"lat": 37.33, "lng": -121.88}}'
             class="block w-full text-xs mono border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 rounded-md shadow-sm"></textarea>
           <div class="flex justify-between items-center mt-2">
             <p id="json-status" class="text-xs text-gray-500"></p>
@@ -408,21 +425,75 @@
               Map</button>
           </div>
         </div>
-      </details>
 
-      <!-- Compare All Locations Button -->
-      <div class="mb-4">
-        <button id="compare-all-btn"
-          class="w-full bg-gray-800 text-white text-sm font-medium py-2.5 px-4 rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-40 disabled:cursor-not-allowed"
-          disabled>
-          Compare All Locations
-        </button>
-        <p class="text-xs text-gray-500 mt-1">Shows a table of closest regions per provider for every location.</p>
+        <!-- Compare All Locations Button -->
+        <div class="mb-4">
+          <button id="compare-all-btn"
+            class="w-full bg-gray-800 text-white text-sm font-medium py-2.5 px-4 rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-40 disabled:cursor-not-allowed"
+            disabled>
+            Compare All Locations
+          </button>
+          <p class="text-xs text-gray-500 mt-1">Generate a comparison table of nearest regions for all your locations.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Filters Tab -->
+      <div id="tab-filters" class="tab-content">
+        <!-- Reset Filters -->
+        <div class="mb-4 flex justify-end">
+          <button id="reset-filters-btn" class="reset-btn">Reset Filters</button>
+        </div>
+
+        <!-- Cloud Provider Filter -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Cloud Provider</label>
+          <div id="provider-radios" class="flex flex-wrap gap-2">
+            <input type="radio" name="provider" value="all" id="provider-all" class="sr-only" checked>
+            <label for="provider-all" class="provider-toggle-label">All</label>
+
+            <input type="radio" name="provider" value="gcp" id="provider-gcp" class="sr-only">
+            <label for="provider-gcp" class="provider-toggle-label">GCP</label>
+
+            <input type="radio" name="provider" value="aws" id="provider-aws" class="sr-only">
+            <label for="provider-aws" class="provider-toggle-label">AWS</label>
+
+            <input type="radio" name="provider" value="azure" id="provider-azure" class="sr-only">
+            <label for="provider-azure" class="provider-toggle-label">Azure</label>
+          </div>
+        </div>
+
+        <!-- Category Filter -->
+        <details class="mb-4" open>
+          <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+            Accelerator Categories
+          </summary>
+          <div class="mt-2">
+            <p class="text-xs text-gray-500 mb-3">Filter by GPU generation. Badges show availability:
+              <span class="chip chip-gcp">GCP</span> <span class="chip chip-aws">AWS</span> <span
+                class="chip chip-azure">Azure</span>.
+            </p>
+            <div id="category-filter" class="space-y-2"></div>
+          </div>
+        </details>
+
+        <!-- Advanced raw type multiselect -->
+        <details class="mb-4">
+          <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+            Advanced: Filter by Raw Type
+          </summary>
+          <div class="mt-2">
+            <select id="gpu-type" multiple
+              class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md h-40"></select>
+            <p class="text-xs text-gray-500 mt-2">Hold Cmd/Ctrl to select multiple.</p>
+          </div>
+        </details>
       </div>
 
       <hr class="my-4">
 
-      <!-- Results Section -->
+      <!-- Results Section (outside tabs, always visible) -->
       <div id="results" class="text-sm">
         <div id="results-placeholder" class="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -725,6 +796,10 @@
         cb.className = 'mr-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 category-checkbox';
         cb.dataset.category = cat;
         cb.addEventListener('click', e => e.stopPropagation());
+        cb.addEventListener('change', () => {
+          applyCategorySelectionToRawSelect();
+          triggerUpdate();
+        });
         leftSide.appendChild(cb);
         const catName = document.createElement('span');
         catName.className = 'text-sm font-medium text-gray-800';
@@ -773,12 +848,6 @@
         }
         row.appendChild(body);
         container.appendChild(row);
-      });
-      container.querySelectorAll('.category-checkbox').forEach(cb => {
-        cb.addEventListener('change', () => {
-          applyCategorySelectionToRawSelect();
-          triggerUpdate();
-        });
       });
     }
 
@@ -984,6 +1053,16 @@
       panelHeader.classList.toggle('mb-4');
       toggleBtn.innerHTML = panelContent.classList.contains('hidden') ? expandIconSVG : collapseIconSVG;
       toggleBtn.setAttribute('aria-label', panelContent.classList.contains('hidden') ? 'Expand panel' : 'Collapse panel');
+    });
+
+    // --- Tab Switching ---
+    document.querySelectorAll('.panel-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+      });
     });
 
     // --- Event Listeners ---
