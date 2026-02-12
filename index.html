@@ -524,18 +524,25 @@
 
     // --- Helper Functions ---
     function categorize(type, provider) {
+      // Handle GCP prefix-based types first
+      if (type.startsWith('A2')) return 'A100';
+      if (type.startsWith('A3 Ultra')) return 'H200';
+      if (type.startsWith('A3')) return 'H100';
+      if (type.startsWith('A4X')) return 'GB';
+      if (type.startsWith('A4')) return 'B200';
+
       switch (type) {
-        case 'A4X': case 'A4X Max': case 'P6e-GB200': return 'GB';
-        case 'A4': case 'P6-B200': return 'B200';
+        case 'P6e-GB200': return 'GB';
+        case 'P6-B200': return 'B200';
         case 'G4': case 'G7e': return 'RTX PRO';
-        case 'A3 Ultra': case 'P5e': case 'P5en':
+        case 'P5e': case 'P5en':
         case 'NDsr H200 v5-Series':
           return 'H200';
-        case 'A3 Mega': case 'A3 High': case 'A3 Edge': case 'P5':
+        case 'P5':
         case 'NCadsH100_v5-series': case 'NCCadsH100_v5-series': case 'NDsr H100 v5-Series':
           return 'H100';
         case 'G6e': return 'L40S';
-        case 'A2 Ultra': case 'A2 Standard': case 'P4d': case 'P4de':
+        case 'P4d': case 'P4de':
         case 'NCads A100 v4-Series': case 'NDamsr A100 v4-Series': case 'NDasr A100 v4-Series':
           return 'A100';
         case 'G2': case 'G6': case 'G6f': case 'Gr6': case 'Gr6f': return 'L4';
