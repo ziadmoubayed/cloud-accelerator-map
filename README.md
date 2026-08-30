@@ -1,5 +1,7 @@
 # Cloud Accelerator Proximity Map
 
+[Link](https://cloud-accelerator-map.pages.dev/)
+
 An interactive web-based tool to visualize the proximity of major cloud provider GPU and accelerator data centers to your own locations. This map helps you find the closest cloud regions with specific accelerator hardware, making it easier to plan for low-latency deployments.
 
 ![worldview](img.png)
