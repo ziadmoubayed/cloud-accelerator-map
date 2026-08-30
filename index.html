@@ -7,9 +7,10 @@
   <title>Cloud Accelerator Proximity Map</title>
   <!--
         Data sources:
-        - GCP: "GPU regions and zones" (last updated 2025‑08‑13 UTC)
-        - AWS: "Amazon EC2 instance types by Region" (canonical per‑region availability)
-        Notes: GCP is zone‑granular; AWS is region‑granular. Coordinates represent the region’s reference city from the docs.
+        - GCP: "GPU regions and zones"
+        - AWS: "Amazon EC2 instance types by Region"
+        - Azure: "Products available by region"
+        Notes: Provider availability is normalized to regions. Coordinates are approximate reference points maintained in region_metadata.json.
     -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
