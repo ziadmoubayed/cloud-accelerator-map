@@ -3,7 +3,7 @@
     "region": "af-south-1",
     "lat": 33.9249,
     "lon": 18.4241,
-    "location": "Africa (Cape Town)",
+    "location": "Africa (Cape Town) â af-south-1",
     "families": [
       "G4dn",
       "Inf1"
@@ -13,7 +13,7 @@
     "region": "ap-east-1",
     "lat": 22.3193,
     "lon": 114.1694,
-    "location": "Asia Pacific (Hong Kong)",
+    "location": "Asia Pacific (Hong Kong) â ap-east-1",
     "families": [
       "G4dn",
       "G5",
@@ -24,7 +24,7 @@
     "region": "ap-northeast-1",
     "lat": 35.6895,
     "lon": 139.6917,
-    "location": "Asia Pacific (Tokyo)",
+    "location": "Asia Pacific (Tokyo) â ap-northeast-1",
     "families": [
       "F2",
       "G4ad",
@@ -51,7 +51,7 @@
     "region": "ap-northeast-2",
     "lat": 37.5665,
     "lon": 126.978,
-    "location": "Asia Pacific (Seoul)",
+    "location": "Asia Pacific (Seoul) â ap-northeast-2",
     "families": [
       "F2",
       "G4dn",
@@ -67,14 +67,15 @@
       "Inf2",
       "P4d",
       "P5",
-      "P5en"
+      "P5en",
+      "P6-B300"
     ]
   },
   {
     "region": "ap-northeast-3",
     "lat": 34.6937,
     "lon": 135.5023,
-    "location": "Asia Pacific (Osaka)",
+    "location": "Asia Pacific (Osaka) â ap-northeast-3",
     "families": [
       "G4dn",
       "G6e"
@@ -84,7 +85,7 @@
     "region": "ap-south-1",
     "lat": 19.076,
     "lon": 72.8777,
-    "location": "Asia Pacific (Mumbai)",
+    "location": "Asia Pacific (Mumbai) â ap-south-1",
     "families": [
       "G4dn",
       "G5",
@@ -107,16 +108,18 @@
     "region": "ap-south-2",
     "lat": 17.385,
     "lon": 78.4867,
-    "location": "Asia Pacific (Hyderabad)",
+    "location": "Asia Pacific (Hyderabad) â ap-south-2",
     "families": [
-      "G6e"
+      "G6",
+      "G6e",
+      "P6-B300"
     ]
   },
   {
     "region": "ap-southeast-1",
     "lat": 1.3521,
     "lon": 103.8198,
-    "location": "Asia Pacific (Singapore)",
+    "location": "Asia Pacific (Singapore) â ap-southeast-1",
     "families": [
       "G4dn",
       "G5g",
@@ -129,7 +132,7 @@
     "region": "ap-southeast-2",
     "lat": -33.8688,
     "lon": 151.2093,
-    "location": "Asia Pacific (Sydney)",
+    "location": "Asia Pacific (Sydney) â ap-southeast-2",
     "families": [
       "F2",
       "G4dn",
@@ -150,7 +153,7 @@
     "region": "ap-southeast-3",
     "lat": 6.2088,
     "lon": 106.8456,
-    "location": "Asia Pacific (Jakarta)",
+    "location": "Asia Pacific (Jakarta) â ap-southeast-3",
     "families": [
       "G5",
       "G5g",
@@ -163,7 +166,7 @@
     "region": "ap-southeast-4",
     "lat": -37.8136,
     "lon": 144.9631,
-    "location": "Asia Pacific (Melbourne)",
+    "location": "Asia Pacific (Melbourne) â ap-southeast-4",
     "families": [
       "Trn1",
       "Trn2"
@@ -173,7 +176,7 @@
     "region": "ap-southeast-5",
     "lat": 3.139,
     "lon": 101.6869,
-    "location": "Asia Pacific (Malaysia)",
+    "location": "Asia Pacific (Malaysia) â ap-southeast-5",
     "families": [
       "G6",
       "Gr6"
@@ -183,7 +186,7 @@
     "region": "ca-central-1",
     "lat": 45.5017,
     "lon": -73.5673,
-    "location": "Canada (Central)",
+    "location": "Canada (Central) â ca-central-1",
     "families": [
       "F2",
       "G4ad",
@@ -202,7 +205,7 @@
     "region": "cn-north-1",
     "lat": 39.9042,
     "lon": 116.4074,
-    "location": "China (Beijing)",
+    "location": "China (Beijing) â cn-north-1",
     "families": [
       "G4dn",
       "G5",
@@ -213,7 +216,7 @@
     "region": "cn-northwest-1",
     "lat": 38.4872,
     "lon": 106.2309,
-    "location": "China (Ningxia)",
+    "location": "China (Ningxia) â cn-northwest-1",
     "families": [
       "G4dn",
       "G5",
@@ -224,7 +227,7 @@
     "region": "eu-central-1",
     "lat": 50.1109,
     "lon": 8.6821,
-    "location": "Europe (Frankfurt)",
+    "location": "Europe (Frankfurt) â eu-central-1",
     "families": [
       "DL2q",
       "F2",
@@ -248,7 +251,7 @@
     "region": "eu-central-2",
     "lat": 47.3769,
     "lon": 8.5417,
-    "location": "Europe (Zurich)",
+    "location": "Europe (Zurich) â eu-central-2",
     "families": [
       "G6",
       "Gr6"
@@ -258,7 +261,7 @@
     "region": "eu-north-1",
     "lat": 59.3293,
     "lon": 18.0686,
-    "location": "Europe (Stockholm)",
+    "location": "Europe (Stockholm) â eu-north-1",
     "families": [
       "G4dn",
       "G5",
@@ -280,7 +283,7 @@
     "region": "eu-south-1",
     "lat": 45.4642,
     "lon": 9.19,
-    "location": "Europe (Milan)",
+    "location": "Europe (Milan) â eu-south-1",
     "families": [
       "G4dn",
       "Inf1"
@@ -290,13 +293,14 @@
     "region": "eu-south-2",
     "lat": 40.4168,
     "lon": -3.7038,
-    "location": "Europe (Spain)",
+    "location": "Europe (Spain) â eu-south-2",
     "families": [
       "G5",
       "G5g",
       "G6",
       "G6e",
       "G6f",
+      "G7",
       "G7e",
       "Gr6",
       "Gr6f",
@@ -307,7 +311,7 @@
     "region": "eu-west-1",
     "lat": 53.3498,
     "lon": -6.2603,
-    "location": "Europe (Ireland)",
+    "location": "Europe (Ireland) â eu-west-1",
     "families": [
       "G4ad",
       "G4dn",
@@ -323,7 +327,7 @@
     "region": "eu-west-2",
     "lat": 51.5074,
     "lon": -0.1278,
-    "location": "Europe (London)",
+    "location": "Europe (London) â eu-west-2",
     "families": [
       "F2",
       "G4ad",
@@ -345,7 +349,7 @@
     "region": "eu-west-3",
     "lat": 48.8566,
     "lon": 2.3522,
-    "location": "Europe (Paris)",
+    "location": "Europe (Paris) â eu-west-3",
     "families": [
       "G4dn",
       "G5",
@@ -359,7 +363,7 @@
     "region": "eusc-de-east-1",
     "lat": 52.3906,
     "lon": 13.0645,
-    "location": "AWS European Sovereign Cloud",
+    "location": "AWS European Sovereign Cloud â eusc-de-east-1",
     "families": [
       "G6"
     ]
@@ -368,7 +372,7 @@
     "region": "il-central-1",
     "lat": 32.0853,
     "lon": 34.7818,
-    "location": "Israel (Tel Aviv)",
+    "location": "Israel (Tel Aviv) â il-central-1",
     "families": [
       "G5",
       "P4de"
@@ -378,7 +382,7 @@
     "region": "me-central-1",
     "lat": 24.4539,
     "lon": 54.3773,
-    "location": "Middle East (UAE)",
+    "location": "Middle East (UAE) â me-central-1",
     "families": [
       "G5",
       "G6",
@@ -390,7 +394,7 @@
     "region": "me-south-1",
     "lat": 26.2235,
     "lon": 50.5876,
-    "location": "Middle East (Bahrain)",
+    "location": "Middle East (Bahrain) â me-south-1",
     "families": [
       "G4dn",
       "Inf1"
@@ -400,7 +404,7 @@
     "region": "sa-east-1",
     "lat": -23.5505,
     "lon": -46.6333,
-    "location": "South America (Sao Paulo)",
+    "location": "South America (Sao Paulo) â sa-east-1",
     "families": [
       "G4dn",
       "G5",
@@ -420,7 +424,7 @@
     "region": "us-east-1",
     "lat": 39.0438,
     "lon": -77.4874,
-    "location": "US East (N. Virginia)",
+    "location": "US East (N. Virginia) â us-east-1",
     "families": [
       "F2",
       "G4ad",
@@ -452,7 +456,7 @@
     "region": "us-east-2",
     "lat": 39.9612,
     "lon": -82.9988,
-    "location": "US East (Ohio)",
+    "location": "US East (Ohio) â us-east-2",
     "families": [
       "G4ad",
       "G4dn",
@@ -480,7 +484,7 @@
     "region": "us-west-1",
     "lat": 37.8272,
     "lon": -122.2913,
-    "location": "US West (N. California)",
+    "location": "US West (N. California) â us-west-1",
     "families": [
       "G4dn",
       "Inf1",
@@ -492,7 +496,7 @@
     "region": "us-west-2",
     "lat": 45.5946,
     "lon": -121.1787,
-    "location": "US West (Oregon)",
+    "location": "US West (Oregon) â us-west-2",
     "families": [
       "DL2q",
       "F2",

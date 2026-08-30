@@ -50,7 +50,7 @@ Example:
 
 > [!NOTE]
 > Coordinates represent the approximate center of the region or its reference city as listed in the official documentation.
-> Data was last updated Feb 2026.
+> Data was last updated August 2026.
 
 ## Refreshing Provider Data
 
