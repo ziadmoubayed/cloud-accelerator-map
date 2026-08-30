@@ -54,7 +54,7 @@ Example:
 
 ## Refreshing Provider Data
 
-The updater fetches all three official provider sources, validates the complete result, and only then replaces the generated JSON files. Region coordinates and canonical labels live in `region_metadata.json`, so a newly launched provider region stops the refresh with a clear metadata error instead of producing a partial map.
+The updater fetches all three official provider sources, validates the complete result, and only then replaces the generated JSON files. It backs up the prior generation and restores it if publishing any provider file fails. Region coordinates and canonical labels live in `region_metadata.json`, so a newly launched provider region stops the refresh with a clear metadata error instead of producing a partial map.
 
 ```bash
 python -m venv .venv
@@ -64,4 +64,4 @@ python -m unittest discover -s tests
 python scrape_data.py
 ```
 
-Pull requests also run the same tests and refresh in GitHub Actions. The refreshed `aws.json`, `azure.json`, and `gcp.json` files are attached to the workflow run as an artifact for review.
+Pull requests also run the same tests and refresh in GitHub Actions. The refreshed `aws.json`, `azure.json`, and `gcp.json` files are attached to the workflow run as an artifact for review, and the job fails if those generated files differ from the committed snapshot.
