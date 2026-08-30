@@ -18,8 +18,10 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: python -m unittest discover -s tests
-      - run: python scrape_data.py
-      - uses: actions/upload-artifact@v4
+      - name: Refresh provider data
+        run: python scrape_data.py
+      - name: Upload refreshed provider data
+        uses: actions/upload-artifact@v4
         with:
           name: refreshed-provider-data
           path: |
@@ -27,3 +29,5 @@ jobs:
             azure.json
             gcp.json
           if-no-files-found: error
+      - name: Verify generated data is committed
+        run: git diff --exit-code -- aws.json azure.json gcp.json

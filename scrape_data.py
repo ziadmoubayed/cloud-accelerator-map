@@ -4,6 +4,7 @@ import re
 from collections import defaultdict
 import json
 from pathlib import Path
+import shutil
 import sys
 import tempfile
 
@@ -18,7 +19,7 @@ def fetch_html(provider, url):
         response.raise_for_status()
     except requests.RequestException as exc:
         raise DataRefreshError(f"Failed to fetch {provider} data: {exc}") from exc
-    return response.text
+    return response.content
 
 REGION_METADATA_PATH = Path(__file__).with_name("region_metadata.json")
 
@@ -123,37 +124,49 @@ def get_aws_data():
 
     cleaned_data = []
     for h2_tag in h2_tags:
-        tag = h2_tag
-        region = tag.select_one("code").text.strip()
-        heading = re.sub(r"\s+", " ", tag.get_text(" ", strip=True))
-        location = re.sub(
-            rf"\s*[—–-]\s*{re.escape(region)}\s*$", "", heading
-        ).strip()
-        for li in tag.find_next("ul").find_all("li"):
-            if "Accelerated Computing" in li.text.strip():
-                # print(li.text.strip())
-                gpu_types = (
-                    li.text.strip()
-                    .split("Accelerated Computing:")[1]
-                    .strip()
-                    .split("|")
+        code = h2_tag.select_one("code")
+        if code is None:
+            raise DataRefreshError(
+                "AWS source schema changed; a region heading has no region code"
+            )
+        region = code.get_text(strip=True)
+        next_heading = h2_tag.find_next("h2", id=re.compile(r"^instance-types-"))
+        gpu_types = set()
+        for element in h2_tag.next_elements:
+            if element is next_heading:
+                break
+            if getattr(element, "name", None) != "li":
+                continue
+            item = re.sub(r"\s+", " ", element.get_text(" ", strip=True))
+            if "Accelerated Computing" not in item:
+                continue
+            match = re.fullmatch(r"Accelerated Computing:\s*(.+)", item)
+            if match is None:
+                raise DataRefreshError(
+                    "AWS source schema changed; unable to parse "
+                    f"accelerated instance types for {region}"
                 )
-                gpu_types = sorted({g.strip() for g in gpu_types if g.strip()})
-                if "GovCloud" in location:
-                    continue
-                if region not in aws_coordinates:
-                    raise DataRefreshError(
-                        f"AWS region metadata is missing for: {region}"
-                    )
-                cleaned_data.append(
-                    {
-                        "region": region,
-                        "lat": aws_coordinates[region]["lat"],
-                        "lon": aws_coordinates[region]["lon"],
-                        "location": location,
-                        "families": gpu_types,
-                    }
-                )
+            gpu_types.update(
+                family.strip()
+                for family in match.group(1).split("|")
+                if family.strip()
+            )
+
+        if not gpu_types or region.startswith("us-gov-"):
+            continue
+        if region not in aws_coordinates:
+            raise DataRefreshError(
+                f"AWS region metadata is missing for: {region}"
+            )
+        cleaned_data.append(
+            {
+                "region": region,
+                "lat": aws_coordinates[region]["lat"],
+                "lon": aws_coordinates[region]["lon"],
+                "location": aws_coordinates[region]["location"],
+                "families": sorted(gpu_types),
+            }
+        )
     return sorted(cleaned_data, key=lambda record: record["region"])
 
 
@@ -231,15 +244,47 @@ def refresh_data(output_dir=Path(".")):
         )
 
     output_dir = Path(output_dir)
-    with tempfile.TemporaryDirectory(dir=output_dir) as staging_dir:
-        staging_path = Path(staging_dir)
+    with tempfile.TemporaryDirectory(dir=output_dir) as transaction_dir:
+        transaction_path = Path(transaction_dir)
+        staging_path = transaction_path / "new"
+        backup_path = transaction_path / "previous"
+        staging_path.mkdir()
+        backup_path.mkdir()
         for provider, records in datasets.items():
             content = json.dumps(records, ensure_ascii=False, indent=2) + "\n"
             (staging_path / f"{provider}.json").write_text(content, encoding="utf-8")
-        for provider in datasets:
-            (staging_path / f"{provider}.json").replace(
-                output_dir / f"{provider}.json"
-            )
+
+        published = []
+        try:
+            for provider in datasets:
+                target = output_dir / f"{provider}.json"
+                if target.exists():
+                    shutil.copy2(target, backup_path / target.name)
+            for provider in datasets:
+                (staging_path / f"{provider}.json").replace(
+                    output_dir / f"{provider}.json"
+                )
+                published.append(provider)
+        except OSError as exc:
+            rollback_errors = []
+            for provider in reversed(published):
+                target = output_dir / f"{provider}.json"
+                backup = backup_path / target.name
+                try:
+                    if backup.exists():
+                        backup.replace(target)
+                    else:
+                        target.unlink(missing_ok=True)
+                except OSError as rollback_exc:
+                    rollback_errors.append(f"{provider}: {rollback_exc}")
+            message = f"Failed to publish provider data: {exc}"
+            if rollback_errors:
+                message += "; rollback also failed for " + ", ".join(
+                    rollback_errors
+                )
+            else:
+                message += "; previous files restored"
+            raise DataRefreshError(message) from exc
     return datasets
 
 
