@@ -190,8 +190,9 @@ def get_azure_data():
             vm_type["RegionName"]
             .lower()
             .strip()
+            .rstrip("*")
+            .strip()
             .replace(" ", "-")
-            .replace("-*", "")
         )
         gpus_per_region[region].add(vm_type["ProductSkuName"])
 
