@@ -1,0 +1,658 @@
+{
+  "aws": {
+    "af-south-1": {
+      "lat": 33.9249,
+      "location": "Africa (Cape Town)",
+      "lon": 18.4241
+    },
+    "ap-east-1": {
+      "lat": 22.3193,
+      "location": "Asia Pacific (Hong Kong)",
+      "lon": 114.1694
+    },
+    "ap-east-2": {
+      "lat": 25.033,
+      "location": "Asia Pacific (Taipei)",
+      "lon": 121.5654
+    },
+    "ap-northeast-1": {
+      "lat": 35.6895,
+      "location": "Asia Pacific (Tokyo)",
+      "lon": 139.6917
+    },
+    "ap-northeast-2": {
+      "lat": 37.5665,
+      "location": "Asia Pacific (Seoul)",
+      "lon": 126.978
+    },
+    "ap-northeast-3": {
+      "lat": 34.6937,
+      "location": "Asia Pacific (Osaka)",
+      "lon": 135.5023
+    },
+    "ap-south-1": {
+      "lat": 19.076,
+      "location": "Asia Pacific (Mumbai)",
+      "lon": 72.8777
+    },
+    "ap-south-2": {
+      "lat": 17.385,
+      "location": "Asia Pacific (Hyderabad)",
+      "lon": 78.4867
+    },
+    "ap-southeast-1": {
+      "lat": 1.3521,
+      "location": "Asia Pacific (Singapore)",
+      "lon": 103.8198
+    },
+    "ap-southeast-2": {
+      "lat": -33.8688,
+      "location": "Asia Pacific (Sydney)",
+      "lon": 151.2093
+    },
+    "ap-southeast-3": {
+      "lat": 6.2088,
+      "location": "Asia Pacific (Jakarta)",
+      "lon": 106.8456
+    },
+    "ap-southeast-4": {
+      "lat": -37.8136,
+      "location": "Asia Pacific (Melbourne)",
+      "lon": 144.9631
+    },
+    "ap-southeast-5": {
+      "lat": 3.139,
+      "location": "Asia Pacific (Malaysia)",
+      "lon": 101.6869
+    },
+    "ca-central-1": {
+      "lat": 45.5017,
+      "location": "Canada (Central)",
+      "lon": -73.5673
+    },
+    "cn-north-1": {
+      "lat": 39.9042,
+      "location": "China (Beijing)",
+      "lon": 116.4074
+    },
+    "cn-northwest-1": {
+      "lat": 38.4872,
+      "location": "China (Ningxia)",
+      "lon": 106.2309
+    },
+    "eu-central-1": {
+      "lat": 50.1109,
+      "location": "Europe (Frankfurt)",
+      "lon": 8.6821
+    },
+    "eu-central-2": {
+      "lat": 47.3769,
+      "location": "Europe (Zurich)",
+      "lon": 8.5417
+    },
+    "eu-north-1": {
+      "lat": 59.3293,
+      "location": "Europe (Stockholm)",
+      "lon": 18.0686
+    },
+    "eu-south-1": {
+      "lat": 45.4642,
+      "location": "Europe (Milan)",
+      "lon": 9.19
+    },
+    "eu-south-2": {
+      "lat": 40.4168,
+      "location": "Europe (Spain)",
+      "lon": -3.7038
+    },
+    "eu-west-1": {
+      "lat": 53.3498,
+      "location": "Europe (Ireland)",
+      "lon": -6.2603
+    },
+    "eu-west-2": {
+      "lat": 51.5074,
+      "location": "Europe (London)",
+      "lon": -0.1278
+    },
+    "eu-west-3": {
+      "lat": 48.8566,
+      "location": "Europe (Paris)",
+      "lon": 2.3522
+    },
+    "eusc-de-east-1": {
+      "lat": 52.3906,
+      "location": "AWS European Sovereign Cloud (Brandenburg, Germany)",
+      "lon": 13.0645
+    },
+    "il-central-1": {
+      "lat": 32.0853,
+      "location": "Israel (Tel Aviv)",
+      "lon": 34.7818
+    },
+    "me-central-1": {
+      "lat": 24.4539,
+      "location": "Middle East (UAE)",
+      "lon": 54.3773
+    },
+    "me-south-1": {
+      "lat": 26.2235,
+      "location": "Middle East (Bahrain)",
+      "lon": 50.5876
+    },
+    "sa-east-1": {
+      "lat": -23.5505,
+      "location": "South America (Sao Paulo)",
+      "lon": -46.6333
+    },
+    "us-east-1": {
+      "lat": 39.0438,
+      "location": "US East (N. Virginia)",
+      "lon": -77.4874
+    },
+    "us-east-2": {
+      "lat": 39.9612,
+      "location": "US East (Ohio)",
+      "lon": -82.9988
+    },
+    "us-gov-east-1": {
+      "lat": 38.8951,
+      "location": "AWS GovCloud (US-East)",
+      "lon": -77.0364
+    },
+    "us-gov-west-1": {
+      "lat": 45.5231,
+      "location": "AWS GovCloud (US-West)",
+      "lon": -122.6765
+    },
+    "us-west-1": {
+      "lat": 37.8272,
+      "location": "US West (N. California)",
+      "lon": -122.2913
+    },
+    "us-west-2": {
+      "lat": 45.5946,
+      "location": "US West (Oregon)",
+      "lon": -121.1787
+    }
+  },
+  "azure": {
+    "australia-central": {
+      "lat": -35.2809,
+      "location": "Australia Central - Canberra",
+      "lon": 149.13
+    },
+    "australia-east": {
+      "lat": -33.8688,
+      "location": "Australia East - New South Wales",
+      "lon": 151.2093
+    },
+    "australia-southeast": {
+      "lat": -37.8136,
+      "location": "Australia Southeast - Victoria",
+      "lon": 144.9631
+    },
+    "austria-east": {
+      "lat": 48.2082,
+      "location": "Austria East - Vienna",
+      "lon": 16.3738
+    },
+    "belgium-central": {
+      "lat": 50.8503,
+      "location": "Belgium Central - Brussels",
+      "lon": 4.3517
+    },
+    "brazil-south": {
+      "lat": -23.5505,
+      "location": "Brazil South - São Paulo State",
+      "lon": -46.6333
+    },
+    "canada-central": {
+      "lat": 43.6532,
+      "location": "Canada Central - Toronto",
+      "lon": -79.3832
+    },
+    "canada-east": {
+      "lat": 46.8139,
+      "location": "Canada East - Quebec City",
+      "lon": -71.2082
+    },
+    "central-india": {
+      "lat": 18.5204,
+      "location": "Central India - Pune",
+      "lon": 73.8567
+    },
+    "central-us": {
+      "lat": 41.878,
+      "location": "Central US - Iowa",
+      "lon": -93.0977
+    },
+    "chile-central": {
+      "lat": -33.4489,
+      "location": "Chile Central - Santiago",
+      "lon": -70.6693
+    },
+    "china-east": {
+      "lat": 31.2304,
+      "location": "China East - Shanghai",
+      "lon": 121.4737
+    },
+    "china-east-2": {
+      "lat": 31.2304,
+      "location": "China East 2 - Shanghai",
+      "lon": 121.4737
+    },
+    "china-north": {
+      "lat": 39.9042,
+      "location": "China North - Beijing",
+      "lon": 116.4074
+    },
+    "china-north-2": {
+      "lat": 39.9042,
+      "location": "China North 2 - Beijing",
+      "lon": 116.4074
+    },
+    "china-north-3": {
+      "lat": 38.0428,
+      "location": "China North 3 - Hebei",
+      "lon": 114.5149
+    },
+    "denmark-east": {
+      "lat": 55.6761,
+      "location": "Denmark East - Copenhagen",
+      "lon": 12.5683
+    },
+    "denmark-north-europe-4": {
+      "lat": 55.4674,
+      "location": "Denmark North Europe 4 - Esberg",
+      "lon": 8.4506
+    },
+    "east-asia": {
+      "lat": 22.3193,
+      "location": "East Asia - Hong Kong",
+      "lon": 114.1694
+    },
+    "east-us": {
+      "lat": 37.4316,
+      "location": "East US - Virginia",
+      "lon": -78.6569
+    },
+    "east-us-2": {
+      "lat": 37.4316,
+      "location": "East US 2 - Virginia",
+      "lon": -78.6569
+    },
+    "east-us-3": {
+      "lat": 32.1656,
+      "location": "East US 3 - Georgia",
+      "lon": -82.9001
+    },
+    "france-central": {
+      "lat": 48.8566,
+      "location": "France Central - Paris",
+      "lon": 2.3522
+    },
+    "germany-west-central": {
+      "lat": 50.1109,
+      "location": "Germany West Central - Frankfurt",
+      "lon": 8.6821
+    },
+    "greece-central": {
+      "lat": 37.9838,
+      "location": "Greece Central - Athens",
+      "lon": 23.7275
+    },
+    "india-south-central": {
+      "lat": 17.385,
+      "location": "India South Central - Hyderabad",
+      "lon": 78.4867
+    },
+    "indonesia-central": {
+      "lat": -6.2088,
+      "location": "Indonesia Central - Jakarta",
+      "lon": 106.8456
+    },
+    "israel-central": {
+      "lat": 31.0461,
+      "location": "Israel Central - Israel",
+      "lon": 34.8516
+    },
+    "italy-north": {
+      "lat": 45.4642,
+      "location": "Italy North - Milan",
+      "lon": 9.1899
+    },
+    "japan-east": {
+      "lat": 35.6762,
+      "location": "Japan East - Tokyo, Saitama",
+      "lon": 139.6503
+    },
+    "japan-west": {
+      "lat": 34.6937,
+      "location": "Japan West - Osaka",
+      "lon": 135.5023
+    },
+    "korea-central": {
+      "lat": 37.5665,
+      "location": "Korea Central - Seoul",
+      "lon": 126.978
+    },
+    "malaysia-west": {
+      "lat": 3.139,
+      "location": "Malaysia West - Kuala Lumpur",
+      "lon": 101.6869
+    },
+    "mexico-central": {
+      "lat": 20.5888,
+      "location": "Mexico Central - Querétaro State",
+      "lon": -100.3899
+    },
+    "new-zealand-north": {
+      "lat": -36.8485,
+      "location": "New Zealand North - Auckland",
+      "lon": 174.7633
+    },
+    "north-central-us": {
+      "lat": 40.6331,
+      "location": "North Central US - Illinois",
+      "lon": -89.3985
+    },
+    "north-europe": {
+      "lat": 53.1424,
+      "location": "North Europe - Ireland",
+      "lon": -7.6921
+    },
+    "north-europe-3": {
+      "lat": 60.1699,
+      "location": "North Europe 3 - Helsinki",
+      "lon": 24.9384
+    },
+    "norway-east": {
+      "lat": 59.9139,
+      "location": "Norway East - Oslo",
+      "lon": 10.7522
+    },
+    "poland-central": {
+      "lat": 52.2297,
+      "location": "Poland Central - Warsaw",
+      "lon": 21.0122
+    },
+    "qatar-central": {
+      "lat": 25.2854,
+      "location": "Qatar Central - Doha",
+      "lon": 51.531
+    },
+    "saudi-arabia-east": {
+      "lat": 26.4207,
+      "location": "Saudi Arabia East - Dammam",
+      "lon": 50.0888
+    },
+    "south-africa-north": {
+      "lat": -26.2041,
+      "location": "South Africa North - Johannesburg",
+      "lon": 28.0473
+    },
+    "south-central-us": {
+      "lat": 29.4243,
+      "location": "South Central US - Texas - San Antonio",
+      "lon": -98.4911
+    },
+    "south-india": {
+      "lat": 13.0827,
+      "location": "South India - Chennai",
+      "lon": 80.2707
+    },
+    "southeast-asia": {
+      "lat": 1.3521,
+      "location": "Southeast Asia - Singapore",
+      "lon": 103.8198
+    },
+    "southeast-asia-3": {
+      "lat": 1.4927,
+      "location": "Southeast Asia 3 - Johor Bahru, Malaysia",
+      "lon": 103.7414
+    },
+    "spain-central": {
+      "lat": 40.4168,
+      "location": "Spain Central - Madrid",
+      "lon": -3.7038
+    },
+    "sweden-central": {
+      "lat": 60.6749,
+      "location": "Sweden Central - Gävle and Sandviken",
+      "lon": 17.1413
+    },
+    "switzerland-north": {
+      "lat": 47.3769,
+      "location": "Switzerland North - Zürich",
+      "lon": 8.5417
+    },
+    "taiwan-north": {
+      "lat": 25.033,
+      "location": "Taiwan North - Taipei",
+      "lon": 121.5654
+    },
+    "thailand-south": {
+      "lat": 13.7563,
+      "location": "Thailand South - Bangkok",
+      "lon": 100.5018
+    },
+    "uae-north": {
+      "lat": 25.2048,
+      "location": "UAE North - Dubai",
+      "lon": 55.2708
+    },
+    "uk-south": {
+      "lat": 51.5074,
+      "location": "UK South - London",
+      "lon": -0.1278
+    },
+    "uk-west": {
+      "lat": 51.4816,
+      "location": "UK West - Cardiff",
+      "lon": -3.1791
+    },
+    "west-central-us": {
+      "lat": 42.756,
+      "location": "West Central US - Wyoming",
+      "lon": -107.3025
+    },
+    "west-europe": {
+      "lat": 52.1326,
+      "location": "West Europe - Netherlands",
+      "lon": 5.2913
+    },
+    "west-us": {
+      "lat": 36.7783,
+      "location": "West US - California",
+      "lon": -119.4179
+    },
+    "west-us-2": {
+      "lat": 47.7511,
+      "location": "West US 2 - Washington",
+      "lon": -120.7401
+    },
+    "west-us-3": {
+      "lat": 34.0489,
+      "location": "West US 3 - Arizona",
+      "lon": -111.0937
+    }
+  },
+  "gcp": {
+    "asia-east1": {
+      "lat": 24.051,
+      "location": "Changhua County, Taiwan, APAC",
+      "lon": 120.516
+    },
+    "asia-east2": {
+      "lat": 22.3193,
+      "location": "Hong Kong, APAC",
+      "lon": 114.1694
+    },
+    "asia-northeast1": {
+      "lat": 35.6895,
+      "location": "Tokyo, Japan, APAC",
+      "lon": 139.6917
+    },
+    "asia-northeast2": {
+      "lat": 34.6937,
+      "location": "Osaka, Japan, APAC",
+      "lon": 135.5023
+    },
+    "asia-northeast3": {
+      "lat": 37.5665,
+      "location": "Seoul, South Korea, APAC",
+      "lon": 126.978
+    },
+    "asia-south1": {
+      "lat": 19.076,
+      "location": "Mumbai, India, APAC",
+      "lon": 72.8777
+    },
+    "asia-south2": {
+      "lat": 28.6139,
+      "location": "Delhi, India, APAC",
+      "lon": 77.209
+    },
+    "asia-southeast1": {
+      "lat": 1.3521,
+      "location": "Jurong West, Singapore, APAC",
+      "lon": 103.8198
+    },
+    "asia-southeast2": {
+      "lat": -6.2088,
+      "location": "Jakarta, Indonesia, APAC",
+      "lon": 106.8456
+    },
+    "australia-southeast1": {
+      "lat": -33.8688,
+      "location": "Sydney, Australia, APAC",
+      "lon": 151.2093
+    },
+    "australia-southeast2": {
+      "lat": -37.8136,
+      "location": "Melbourne, Australia, APAC",
+      "lon": 144.9631
+    },
+    "europe-central2": {
+      "lat": 52.2297,
+      "location": "Warsaw, Poland, Europe",
+      "lon": 21.0122
+    },
+    "europe-north1": {
+      "lat": 60.5693,
+      "location": "Hamina, Finland, Europe",
+      "lon": 27.1878
+    },
+    "europe-west1": {
+      "lat": 50.445,
+      "location": "St. Ghislain, Belgium, Europe",
+      "lon": 3.82
+    },
+    "europe-west10": {
+      "lat": 52.52,
+      "location": "Berlin, Germany, Europe",
+      "lon": 13.405
+    },
+    "europe-west2": {
+      "lat": 51.5074,
+      "location": "London, England, Europe",
+      "lon": -0.1278
+    },
+    "europe-west3": {
+      "lat": 50.1109,
+      "location": "Frankfurt, Germany, Europe",
+      "lon": 8.6821
+    },
+    "europe-west4": {
+      "lat": 53.442,
+      "location": "Eemshaven, Netherlands, Europe",
+      "lon": 6.83
+    },
+    "europe-west6": {
+      "lat": 47.3769,
+      "location": "Zurich, Switzerland, Europe",
+      "lon": 8.5417
+    },
+    "europe-west8": {
+      "lat": 45.4642,
+      "location": "Milan, Italy, Europe",
+      "lon": 9.19
+    },
+    "europe-west9": {
+      "lat": 48.8566,
+      "location": "Paris, France, Europe",
+      "lon": 2.3522
+    },
+    "me-central2": {
+      "lat": 26.4207,
+      "location": "Dammam, Saudi Arabia, Middle East",
+      "lon": 50.0888
+    },
+    "me-west1": {
+      "lat": 32.0853,
+      "location": "Tel Aviv, Israel, Middle East",
+      "lon": 34.7818
+    },
+    "northamerica-northeast1": {
+      "lat": 45.5017,
+      "location": "Montréal, Québec, North America",
+      "lon": -73.5673
+    },
+    "northamerica-northeast2": {
+      "lat": 43.6532,
+      "location": "Toronto, Ontario, North America",
+      "lon": -79.3832
+    },
+    "southamerica-east1": {
+      "lat": -23.5329,
+      "location": "Osasco, São Paulo, Brazil, South America",
+      "lon": -46.792
+    },
+    "us-central1": {
+      "lat": 41.2619,
+      "location": "Council Bluffs, Iowa, North America",
+      "lon": -95.8608
+    },
+    "us-east1": {
+      "lat": 33.195,
+      "location": "Moncks Corner, South Carolina, North America",
+      "lon": -80.013
+    },
+    "us-east4": {
+      "lat": 39.0438,
+      "location": "Ashburn, Virginia, North America",
+      "lon": -77.4874
+    },
+    "us-east5": {
+      "lat": 39.9612,
+      "location": "Columbus, Ohio, North America",
+      "lon": -82.9988
+    },
+    "us-south1": {
+      "lat": 32.7767,
+      "location": "Dallas, Texas, North America",
+      "lon": -96.797
+    },
+    "us-west1": {
+      "lat": 45.5946,
+      "location": "The Dalles, Oregon, North America",
+      "lon": -121.1787
+    },
+    "us-west2": {
+      "lat": 34.0522,
+      "location": "Los Angeles, California, North America",
+      "lon": -118.2437
+    },
+    "us-west3": {
+      "lat": 40.7608,
+      "location": "Salt Lake City, Utah, North America",
+      "lon": -111.891
+    },
+    "us-west4": {
+      "lat": 36.1699,
+      "location": "Las Vegas, Nevada, North America",
+      "lon": -115.1398
+    }
+  }
+}

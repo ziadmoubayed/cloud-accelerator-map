@@ -6,8 +6,8 @@ An interactive web-based tool to visualize the proximity of major cloud provider
 
 ## Features
 
-- Interactive World Map: Visualize global data center locations from Google Cloud (GCP) and Amazon Web Services (AWS).
-- Filtering by Provider or Accelerator: Display locations for all providers, or focus specifically on GCP or AWS.
+- Interactive World Map: Visualize global data center locations from Google Cloud (GCP), Amazon Web Services (AWS), and Microsoft Azure.
+- Filtering by Provider or Accelerator: Display locations for all providers, or focus on a specific cloud or accelerator family.
 - Custom User Locations: Add your own data center or user locations by pasting a simple JSON object to find the nearest cloud regions.
 - Proximity Calculation: Click on one of your locations to instantly see a ranked list of the 5 closest cloud regions that match your filters, complete with distances in kilometers.
 - Shareable State: The current view—including selected provider, accelerator types, and your custom locations—is encoded in the URL. Simply copy the URL to share your exact configuration with others.
@@ -44,10 +44,24 @@ Example:
 
 ## Data Sources
 
-1. GCP: [GPU regions and zones](https://cloud.google.com/compute/docs/gpus/gpu-regions-zones).
+1. GCP: [GPU regions and zones](https://docs.cloud.google.com/compute/docs/regions-zones/gpu-regions-zones).
 2. AWS: [Amazon EC2 instance types by Region](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-regions.html).
 3. Azure: [Product Availability Per Region](https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/table).
 
 > [!NOTE]
 > Coordinates represent the approximate center of the region or its reference city as listed in the official documentation.
 > Data was last updated Feb 2026.
+
+## Refreshing Provider Data
+
+The updater fetches all three official provider sources, validates the complete result, and only then replaces the generated JSON files. Region coordinates and canonical labels live in `region_metadata.json`, so a newly launched provider region stops the refresh with a clear metadata error instead of producing a partial map.
+
+```bash
+python -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+python -m unittest discover -s tests
+python scrape_data.py
+```
+
+Pull requests also run the same tests and refresh in GitHub Actions. The refreshed `aws.json`, `azure.json`, and `gcp.json` files are attached to the workflow run as an artifact for review.
