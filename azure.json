@@ -1,6 +1,7 @@
 [
   {
     "region": "australia-central",
+    "region_id": "australiacentral",
     "lat": -35.2809,
     "lon": 149.13,
     "location": "Australia Central - Canberra",
@@ -10,6 +11,7 @@
   },
   {
     "region": "australia-east",
+    "region_id": "australiaeast",
     "lat": -33.8688,
     "lon": 151.2093,
     "location": "Australia East - New South Wales",
@@ -24,6 +26,7 @@
   },
   {
     "region": "australia-southeast",
+    "region_id": "australiasoutheast",
     "lat": -37.8136,
     "lon": 144.9631,
     "location": "Australia Southeast - Victoria",
@@ -33,6 +36,7 @@
   },
   {
     "region": "belgium-central",
+    "region_id": "belgiumcentral",
     "lat": 50.8503,
     "lon": 4.3517,
     "location": "Belgium Central - Brussels",
@@ -45,6 +49,7 @@
   },
   {
     "region": "brazil-south",
+    "region_id": "brazilsouth",
     "lat": -23.5505,
     "lon": -46.6333,
     "location": "Brazil South - São Paulo State",
@@ -56,6 +61,7 @@
   },
   {
     "region": "canada-central",
+    "region_id": "canadacentral",
     "lat": 43.6532,
     "lon": -79.3832,
     "location": "Canada Central - Toronto",
@@ -70,6 +76,7 @@
   },
   {
     "region": "central-india",
+    "region_id": "centralindia",
     "lat": 18.5204,
     "lon": 73.8567,
     "location": "Central India - Pune",
@@ -82,6 +89,7 @@
   },
   {
     "region": "central-us",
+    "region_id": "centralus",
     "lat": 41.878,
     "lon": -93.0977,
     "location": "Central US - Iowa",
@@ -96,6 +104,7 @@
   },
   {
     "region": "china-north-3",
+    "region_id": "chinanorth3",
     "lat": 38.0428,
     "lon": 114.5149,
     "location": "China North 3 - Hebei",
@@ -106,6 +115,7 @@
   },
   {
     "region": "east-asia",
+    "region_id": "eastasia",
     "lat": 22.3193,
     "lon": 114.1694,
     "location": "East Asia - Hong Kong",
@@ -116,6 +126,7 @@
   },
   {
     "region": "east-us",
+    "region_id": "eastus",
     "lat": 37.4316,
     "lon": -78.6569,
     "location": "East US - Virginia",
@@ -133,6 +144,7 @@
   },
   {
     "region": "east-us-2",
+    "region_id": "eastus2",
     "lat": 37.4316,
     "lon": -78.6569,
     "location": "East US 2 - Virginia",
@@ -150,6 +162,7 @@
   },
   {
     "region": "france-central",
+    "region_id": "francecentral",
     "lat": 48.8566,
     "lon": 2.3522,
     "location": "France Central - Paris",
@@ -163,6 +176,7 @@
   },
   {
     "region": "germany-west-central",
+    "region_id": "germanywestcentral",
     "lat": 50.1109,
     "lon": 8.6821,
     "location": "Germany West Central - Frankfurt",
@@ -175,6 +189,7 @@
   },
   {
     "region": "india-south-central",
+    "region_id": "indiasouthcentral",
     "lat": 17.385,
     "lon": 78.4867,
     "location": "India South Central - Hyderabad",
@@ -184,6 +199,7 @@
   },
   {
     "region": "indonesia-central",
+    "region_id": "indonesiacentral",
     "lat": -6.2088,
     "lon": 106.8456,
     "location": "Indonesia Central - Jakarta",
@@ -197,6 +213,7 @@
   },
   {
     "region": "italy-north",
+    "region_id": "italynorth",
     "lat": 45.4642,
     "lon": 9.1899,
     "location": "Italy North - Milan",
@@ -211,6 +228,7 @@
   },
   {
     "region": "japan-east",
+    "region_id": "japaneast",
     "lat": 35.6762,
     "lon": 139.6503,
     "location": "Japan East - Tokyo, Saitama",
@@ -226,6 +244,7 @@
   },
   {
     "region": "japan-west",
+    "region_id": "japanwest",
     "lat": 34.6937,
     "lon": 135.5023,
     "location": "Japan West - Osaka",
@@ -239,6 +258,7 @@
   },
   {
     "region": "korea-central",
+    "region_id": "koreacentral",
     "lat": 37.5665,
     "lon": 126.978,
     "location": "Korea Central - Seoul",
@@ -252,6 +272,7 @@
   },
   {
     "region": "malaysia-west",
+    "region_id": "malaysiawest",
     "lat": 3.139,
     "lon": 101.6869,
     "location": "Malaysia West - Kuala Lumpur",
@@ -263,6 +284,7 @@
   },
   {
     "region": "mexico-central",
+    "region_id": "mexicocentral",
     "lat": 20.5888,
     "lon": -100.3899,
     "location": "Mexico Central - Querétaro State",
@@ -272,6 +294,7 @@
   },
   {
     "region": "north-central-us",
+    "region_id": "northcentralus",
     "lat": 40.6331,
     "lon": -89.3985,
     "location": "North Central US - Illinois",
@@ -286,6 +309,7 @@
   },
   {
     "region": "north-europe",
+    "region_id": "northeurope",
     "lat": 53.1424,
     "lon": -7.6921,
     "location": "North Europe - Ireland",
@@ -298,6 +322,7 @@
   },
   {
     "region": "norway-east",
+    "region_id": "norwayeast",
     "lat": 59.9139,
     "lon": 10.7522,
     "location": "Norway East - Oslo",
@@ -308,6 +333,7 @@
   },
   {
     "region": "poland-central",
+    "region_id": "polandcentral",
     "lat": 52.2297,
     "lon": 21.0122,
     "location": "Poland Central - Warsaw",
@@ -321,6 +347,7 @@
   },
   {
     "region": "qatar-central",
+    "region_id": "qatarcentral",
     "lat": 25.2854,
     "lon": 51.531,
     "location": "Qatar Central - Doha",
@@ -330,6 +357,7 @@
   },
   {
     "region": "south-africa-north",
+    "region_id": "southafricanorth",
     "lat": -26.2041,
     "lon": 28.0473,
     "location": "South Africa North - Johannesburg",
@@ -341,6 +369,7 @@
   },
   {
     "region": "south-central-us",
+    "region_id": "southcentralus",
     "lat": 29.4243,
     "lon": -98.4911,
     "location": "South Central US - Texas - San Antonio",
@@ -358,6 +387,7 @@
   },
   {
     "region": "south-india",
+    "region_id": "southindia",
     "lat": 13.0827,
     "lon": 80.2707,
     "location": "South India - Chennai",
@@ -367,10 +397,12 @@
   },
   {
     "region": "southeast-asia",
+    "region_id": "southeastasia",
     "lat": 1.3521,
     "lon": 103.8198,
     "location": "Southeast Asia - Singapore",
     "families": [
+      "NC_RTXPRO6000BSE_v6",
       "NCads A100 v4-Series",
       "NCadsH100_v5-series",
       "NCas T4 v3-Series",
@@ -379,6 +411,7 @@
   },
   {
     "region": "spain-central",
+    "region_id": "spaincentral",
     "lat": 40.4168,
     "lon": -3.7038,
     "location": "Spain Central - Madrid",
@@ -391,6 +424,7 @@
   },
   {
     "region": "sweden-central",
+    "region_id": "swedencentral",
     "lat": 60.6749,
     "lon": 17.1413,
     "location": "Sweden Central - Gävle and Sandviken",
@@ -406,6 +440,7 @@
   },
   {
     "region": "switzerland-north",
+    "region_id": "switzerlandnorth",
     "lat": 47.3769,
     "lon": 8.5417,
     "location": "Switzerland North - Zürich",
@@ -418,6 +453,7 @@
   },
   {
     "region": "taiwan-north",
+    "region_id": "taiwannorth",
     "lat": 25.033,
     "lon": 121.5654,
     "location": "Taiwan North - Taipei",
@@ -428,6 +464,7 @@
   },
   {
     "region": "uae-north",
+    "region_id": "uaenorth",
     "lat": 25.2048,
     "lon": 55.2708,
     "location": "UAE North - Dubai",
@@ -439,6 +476,7 @@
   },
   {
     "region": "uk-south",
+    "region_id": "uksouth",
     "lat": 51.5074,
     "lon": -0.1278,
     "location": "UK South - London",
@@ -455,6 +493,7 @@
   },
   {
     "region": "uk-west",
+    "region_id": "ukwest",
     "lat": 51.4816,
     "lon": -3.1791,
     "location": "UK West - Cardiff",
@@ -465,6 +504,7 @@
   },
   {
     "region": "west-central-us",
+    "region_id": "westcentralus",
     "lat": 42.756,
     "lon": -107.3025,
     "location": "West Central US - Wyoming",
@@ -474,6 +514,7 @@
   },
   {
     "region": "west-europe",
+    "region_id": "westeurope",
     "lat": 52.1326,
     "lon": 5.2913,
     "location": "West Europe - Netherlands",
@@ -492,6 +533,7 @@
   },
   {
     "region": "west-us",
+    "region_id": "westus",
     "lat": 36.7783,
     "lon": -119.4179,
     "location": "West US - California",
@@ -507,10 +549,12 @@
   },
   {
     "region": "west-us-2",
+    "region_id": "westus2",
     "lat": 47.7511,
     "lon": -120.7401,
     "location": "West US 2 - Washington",
     "families": [
+      "NC_RTXPRO6000BSE_v6",
       "NCads A100 v4-Series",
       "NCadsH100_v5-series",
       "NCas T4 v3-Series",
@@ -523,6 +567,7 @@
   },
   {
     "region": "west-us-3",
+    "region_id": "westus3",
     "lat": 34.0489,
     "lon": -111.0937,
     "location": "West US 3 - Arizona",
