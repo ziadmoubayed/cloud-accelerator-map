@@ -11,15 +11,17 @@ An interactive web-based tool to visualize the proximity of major cloud provider
 - Interactive World Map: Visualize global data center locations from Google Cloud (GCP), Amazon Web Services (AWS), and Microsoft Azure.
 - Filtering by Provider or Accelerator: Display locations for all providers, or focus on a specific cloud or accelerator family.
 - Custom User Locations: Add your own data center or user locations by pasting a simple JSON object to find the nearest cloud regions.
-- Proximity Calculation: Click on one of your locations to instantly see a ranked list of the 5 closest cloud regions that match your filters, complete with distances in kilometers.
+- Proximity Calculation: Adding locations immediately shows the 5 closest matching cloud regions. Switch with the location selector or a green marker. Distances are approximate straight-line kilometers, not measured network latency.
 - Shareable State: The current view—including selected provider, accelerator types, and your custom locations—is encoded in the URL. Simply copy the URL to share your exact configuration with others.
 
 ## Add Your Locations
 
-1. Expand the Your Locations section.
-2. Paste a JSON object containing your locations into the text area. The required format is an object where keys are location names and values are objects with lat and lng properties.
-3. Click the Update Map button. Your locations will appear on the map as green rings.
-4. Select any of your DCs to see the closest regions.
+1. Open the Your Locations tab.
+2. Paste a JSON object keyed by location name. Coordinates must be numbers: `lat` between -90 and 90, and `lng` (or `lon`) between -180 and 180.
+3. Click Update Map. Green markers appear and proximity results open for the first location (or your previously selected location if it still exists).
+4. Use Find regions near or click a green marker to select another location. Compare All Locations gives the nearest matching region per provider.
+
+Only applied, validated locations are saved in the URL; invalid edits leave your previous map intact. Shared URLs contain your location names and coordinates, so share them only with intended recipients.
 
 Example:
 ```json
@@ -42,6 +44,14 @@ Example:
   }
 }
 ```
+
+## Basemap
+
+The map uses OpenStreetMap standard tiles with visible attribution, normal browser caching, and an origin-only cross-origin referrer. CARTO's formerly keyless endpoint now returns "API key required" tiles, so it is no longer the default. Use is limited to normal interactive viewing under the [OSM tile usage policy](https://operations.osmfoundation.org/policies/tiles/): no prefetch, bulk downloads, or offline tiles. The public service has no SLA; a high-traffic deployment should use a suitably provisioned tile provider.
+
+## Proximity Regression Tests
+
+Run `node --test tests/test_map.js` with Node.js 22 or newer. These dependency-free tests run the page's actual script and event handlers with DOM/Leaflet doubles, covering coordinate validation, `lon` normalization, automatic selection, marker/selector switching, sorted distances, category reset, saved-link restoration, escaped location names, and visible provider-load failures. They do not replace visual browser checks or test live tile delivery.
 
 
 ## Data Sources
