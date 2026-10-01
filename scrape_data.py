@@ -64,6 +64,13 @@ azure_data = region_metadata["azure"]
 
 AWS_EXCLUDED_REGION_PREFIXES = ("us-gov-",)
 
+# Microsoft documents these GA placements separately from the product-by-region
+# payload. Keep them explicit until that payload includes the family.
+AZURE_DOCUMENTED_GA_OVERRIDES = {
+    "southeast-asia": {"NC_RTXPRO6000BSE_v6"},
+    "west-us-2": {"NC_RTXPRO6000BSE_v6"},
+}
+
 
 def metadata_for(provider, region, metadata):
     if region not in metadata:
@@ -270,6 +277,9 @@ def get_azure_data():
             .replace(" ", "-")
         )
         gpus_per_region[region].add(vm_type["ProductSkuName"])
+
+    for region, families in AZURE_DOCUMENTED_GA_OVERRIDES.items():
+        gpus_per_region[region].update(families)
 
     cleaned_data = []
     reserved_regions = ("china-east-3", "australia-central-2", "korea-south")
