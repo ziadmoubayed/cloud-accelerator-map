@@ -66,6 +66,8 @@ AWS_EXCLUDED_REGION_PREFIXES = ("us-gov-",)
 
 # Microsoft documents these GA placements separately from the product-by-region
 # payload. Keep them explicit until that payload includes the family.
+# Verified 2026-10-01; recheck this source during each monthly data review:
+# https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/gpu-accelerated/nc-rtxpro6000-bse-v6-series-overview
 AZURE_DOCUMENTED_GA_OVERRIDES = {
     "southeast-asia": {"NC_RTXPRO6000BSE_v6"},
     "west-us-2": {"NC_RTXPRO6000BSE_v6"},
