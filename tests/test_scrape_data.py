@@ -305,7 +305,10 @@ class AzureParserTests(unittest.TestCase):
     def test_get_azure_data_finds_gpu_dataset_and_deduplicates_families(self):
         html = (FIXTURES / "azure.html").read_text(encoding="utf-8")
 
-        with patch.object(scrape_data.requests, "get", return_value=FakeResponse(html)):
+        with (
+            patch.object(scrape_data.requests, "get", return_value=FakeResponse(html)),
+            patch.object(scrape_data, "AZURE_DOCUMENTED_GA_OVERRIDES", {}),
+        ):
             records = scrape_data.get_azure_data()
 
         self.assertEqual(
@@ -329,6 +332,17 @@ class AzureParserTests(unittest.TestCase):
                 },
             ],
         )
+
+    def test_get_azure_data_applies_documented_ga_overrides(self):
+        html = (FIXTURES / "azure.html").read_text(encoding="utf-8")
+
+        with patch.object(scrape_data.requests, "get", return_value=FakeResponse(html)):
+            records = {record["region"]: record for record in scrape_data.get_azure_data()}
+
+        self.assertIn(
+            "NC_RTXPRO6000BSE_v6", records["southeast-asia"]["families"]
+        )
+        self.assertIn("NC_RTXPRO6000BSE_v6", records["west-us-2"]["families"])
 
     def test_get_azure_data_reports_missing_region_metadata(self):
         html = (FIXTURES / "azure-unknown-region.html").read_text(encoding="utf-8")
