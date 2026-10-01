@@ -52,7 +52,7 @@ Example:
 
 > [!NOTE]
 > Coordinates represent the approximate center of the region or its reference city as listed in the official documentation.
-> Data was last updated August 2026.
+> Data was last updated October 2026. AWS GovCloud is intentionally outside the map's public/commercial cloud scope.
 
 ## Refreshing Provider Data
 
@@ -66,4 +66,8 @@ python -m unittest discover -s tests
 python scrape_data.py
 ```
 
-Pull requests also run the same tests and refresh in GitHub Actions. The refreshed `aws.json`, `azure.json`, and `gcp.json` files are attached to the workflow run as an artifact for review, and the job fails if those generated files differ from the committed snapshot.
+Azure records retain the map's display slug in `region` and expose Azure's canonical programmatic name in `region_id` (for example, `east-us-2` and `eastus2`).
+
+Microsoft documents the ND GB200 v6 and ND GB300 v6 families, but the map does not assign them to regions until Microsoft's product-availability source reports a dependable GA region mapping.
+
+Pull requests and a monthly scheduled GitHub Actions run execute the same tests and refresh. The refreshed `aws.json`, `azure.json`, and `gcp.json` files are attached to the workflow run as an artifact for review, and the job fails if those generated files differ from the committed snapshot.
