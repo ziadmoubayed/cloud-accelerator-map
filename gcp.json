@@ -8,7 +8,6 @@
       "A3 High",
       "G2",
       "G4",
-      "N1+P100",
       "N1+T4",
       "N1+V100"
     ]
@@ -32,6 +31,7 @@
       "A3 Mega",
       "A4",
       "G2",
+      "G4",
       "N1+T4"
     ]
   },
@@ -43,6 +43,7 @@
     "families": [
       "A2 Standard",
       "A3 Edge",
+      "A3 High",
       "G2",
       "N1+T4"
     ]
@@ -104,9 +105,17 @@
     "location": "Sydney, Australia, APAC",
     "families": [
       "A3 Mega",
-      "N1+P100",
       "N1+P4",
       "N1+T4"
+    ]
+  },
+  {
+    "region": "australia-southeast2",
+    "lat": -37.8136,
+    "lon": 144.9631,
+    "location": "Melbourne, Australia, APAC",
+    "families": [
+      "A3 High"
     ]
   },
   {
@@ -137,9 +146,9 @@
       "A3 High",
       "A3 Mega",
       "A3 Ultra",
+      "A4",
       "G2",
       "G4",
-      "N1+P100",
       "N1+T4"
     ]
   },
@@ -189,7 +198,6 @@
       "A4X",
       "G2",
       "G4",
-      "N1+P100",
       "N1+P4",
       "N1+T4",
       "N1+V100"
@@ -211,6 +219,15 @@
     "location": "Milan, Italy, Europe",
     "families": [
       "G4"
+    ]
+  },
+  {
+    "region": "europe-west9",
+    "lat": 48.8566,
+    "lon": 2.3522,
+    "location": "Paris, France, Europe",
+    "families": [
+      "A3 High"
     ]
   },
   {
@@ -260,6 +277,7 @@
     "lon": -46.792,
     "location": "Osasco, São Paulo, Brazil, South America",
     "families": [
+      "G4",
       "N1+T4"
     ]
   },
@@ -280,7 +298,6 @@
       "G2",
       "G4",
       "G4 (Fractional GPU)",
-      "N1+P100",
       "N1+P4",
       "N1+T4",
       "N1+V100"
@@ -297,7 +314,6 @@
       "A4X",
       "G2",
       "G4",
-      "N1+P100",
       "N1+T4",
       "N1+V100"
     ]
@@ -357,7 +373,6 @@
       "A3 Ultra",
       "G2",
       "G4",
-      "N1+P100",
       "N1+T4",
       "N1+V100"
     ]
