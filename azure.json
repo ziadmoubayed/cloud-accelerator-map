@@ -300,6 +300,7 @@
     "location": "North Central US - Illinois",
     "families": [
       "NCads A100 v4-Series",
+      "NCadsH100_v5-series",
       "NCas T4 v3-Series",
       "NDsr H100 v5-Series",
       "NDsr H200 v5-Series",
@@ -541,6 +542,7 @@
       "NCads A100 v4-Series",
       "NCadsH100_v5-series",
       "NCas T4 v3-Series",
+      "NDasr A100 v4-Series",
       "NDsr H100 v5-Series",
       "NDsr MI300X v5-Series",
       "NVadsA10_v5-series",
