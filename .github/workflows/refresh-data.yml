@@ -20,6 +20,11 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: python -m unittest discover -s tests
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test proximity interactions
+        run: node --test tests/test_map.js
       - name: Refresh provider data
         run: python scrape_data.py
       - name: Upload refreshed provider data
