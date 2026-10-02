@@ -69,8 +69,9 @@ async function app({ search = '', responses = {} } = {}) {
   const L = { map: () => map, tileLayer: (url, options) => { tile = { url, options }; return layer(); }, layerGroup: layer, markerClusterGroup: layer, circleMarker: marker, marker, polyline: marker, divIcon: o => o, Point: function() {} };
   const location = { pathname: '/', search };
   const errors = [];
+  let copiedMarkdown = '';
   const context = vm.createContext({ document, L, window: { location }, URLSearchParams, btoa, atob, setTimeout,
-    navigator: { clipboard: { writeText: async () => {} } }, console: { error: (...args) => errors.push(args), warn() {} },
+    navigator: { clipboard: { writeText: async text => { copiedMarkdown = text; } } }, console: { error: (...args) => errors.push(args), warn() {} },
     history: { replaceState(a, b, url) { location.search = new URL(url, 'https://example.test').search; } },
     fetch: async file => responses[file] || { ok: true, json: async () => snapshots[file] },
   });
@@ -78,7 +79,7 @@ async function app({ search = '', responses = {} } = {}) {
   const run = code => vm.runInContext(code, context);
   const plain = code => JSON.parse(JSON.stringify(run(code)));
   const input = value => { ids.get('dc-json-input').value = value; ids.get('update-dcs-btn').fire('click'); };
-  return { run, plain, ids, input, location, map, tile, errors, queryAll };
+  return { run, plain, ids, input, location, map, tile, errors, queryAll, copiedMarkdown: () => copiedMarkdown };
 }
 
 test('page loads all three current snapshots and uses an attributed, keyless basemap', async () => {
@@ -265,7 +266,7 @@ test('GB and GPU-only Blackwell systems are distinct; unknown names are not gues
   assert.equal(a.run('categorize("A4X Max", "AWS")'), 'Unclassified');
 });
 
-test('model search finds documented AWS GB300 without inventing mapped regions', async () => {
+test('model search selects every confirmed GB300 offering without inventing mapped regions', async () => {
   const a = await app();
   a.ids.get('hardware-search').value = 'GB300'; a.ids.get('hardware-search').fire('input');
   const entries = a.plain('getFilteredFamilyEntries().map(e => ({ family: e.family, model: e.model, regions: e.regions.size }))');
@@ -274,12 +275,54 @@ test('model search finds documented AWS GB300 without inventing mapped regions',
   assert.ok(entries.some(e => e.family === 'ND GB300-v6' && e.regions === 0));
   assert.equal(entries.every(e => e.model === 'GB300'), true);
   const aws = a.queryAll('.family-checkbox').find(e => e.dataset.family === 'P6e-GB300');
-  assert.equal(aws.disabled, true);
+  assert.equal(aws.disabled, false);
   const model = a.queryAll('.category-checkbox').find(e => e.dataset.category === 'GB300');
   model.checked = true; model.fire('change');
-  assert.deepEqual(a.plain('getSelectedAcceleratorTypes()'), ['A4X Max']);
+  assert.deepEqual(a.plain('getSelectedAcceleratorTypes()'), ['A4X Max', 'ND GB300-v6', 'P6e-GB300']);
   a.ids.get('hardware-search').value = 'B300'; a.ids.get('hardware-search').fire('input');
   assert.deepEqual(a.plain('getFilteredFamilyEntries().map(e => e.family)'), ['P6-B300']);
+});
+
+test('AWS GB300 is selectable and shareable while missing regional coverage stays explicit', async () => {
+  const a = await app();
+  a.ids.get('provider-all').checked = false; a.ids.get('provider-aws').checked = true;
+  a.ids.get('provider-aws').fire('change');
+  a.ids.get('hardware-search').value = 'GB300'; a.ids.get('hardware-search').fire('input');
+  const model = a.queryAll('.category-checkbox').find(e => e.dataset.category === 'GB300');
+  assert.equal(model.disabled, false);
+  model.checked = true; model.fire('change');
+  assert.deepEqual(a.plain('getSelectedAcceleratorTypes()'), ['P6e-GB300']);
+  assert.equal(new URLSearchParams(a.location.search).get('gpus'), 'P6e-GB300');
+  assert.match(a.ids.get('selected-hardware').children[0].textContent, /AWS.*P6e-GB300.*NVIDIA GB300.*provider confirmed/);
+  assert.match(a.ids.get('selection-status').textContent, /1 active in AWS.*regions not yet verified/);
+  a.input('{"Amsterdam":{"lat":52.36,"lng":4.9}}');
+  assert.match(a.ids.get('results-content').innerHTML, /Provider-confirmed offerings.*AWS NVIDIA GB300.*distance rankings are incomplete/i);
+  assert.doesNotMatch(a.ids.get('results-content').innerHTML, /No regions match/);
+  assert.equal(a.run('awsLayer.layers.length'), 0);
+  assert.equal(a.run('linesLayer.layers.length'), 0);
+  a.ids.get('compare-all-btn').fire('click');
+  assert.match(a.run('document.body.innerHTML'), /Provider confirmed; regions not verified/);
+  a.ids.get('copy-md-btn').fire('click');
+  assert.match(a.copiedMarkdown(), /AWS NVIDIA GB300.*Distance rankings are incomplete/);
+  const restored = await app({ search: a.location.search });
+  assert.deepEqual(restored.plain('getSelectedAcceleratorTypes()'), ['P6e-GB300']);
+  assert.match(restored.ids.get('selection-status').textContent, /provider-confirmed/);
+  restored.ids.get('selected-hardware').children[0].fire('click');
+  assert.deepEqual(restored.plain('getSelectedAcceleratorTypes()'), []);
+});
+
+test('a GB300 comparison cannot declare a closest provider when AWS region coverage is missing', async () => {
+  const a = await app();
+  a.run('setFamilySelection(["A4X Max", "P6e-GB300"], true)');
+  a.input('{"Amsterdam":{"lat":52.36,"lng":4.9}}');
+  assert.match(a.ids.get('results-content').innerHTML, /rankings are incomplete/);
+  assert.ok(a.run('linesLayer.layers.length') > 0);
+  a.ids.get('compare-all-btn').fire('click');
+  assert.match(a.run('document.body.innerHTML'), /Incomplete coverage/);
+  assert.doesNotMatch(a.run('document.body.innerHTML'), /winner-gcp font-bold/);
+  a.ids.get('copy-md-btn').fire('click');
+  assert.match(a.copiedMarkdown(), /Regions not verified/);
+  assert.match(a.copiedMarkdown(), /\*\*Incomplete coverage\*\*/);
 });
 
 test('family, provider, architecture and GPU-memory searches work', async () => {
