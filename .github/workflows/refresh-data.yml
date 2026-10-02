@@ -27,8 +27,6 @@ jobs:
         run: node --test tests/test_map.js
       - name: Refresh provider data
         run: python scrape_data.py
-      - name: Verify refreshed families have hardware mappings
-        run: node --test tests/test_map.js
       - name: Upload refreshed provider data
         uses: actions/upload-artifact@v4
         with:
@@ -38,5 +36,7 @@ jobs:
             azure.json
             gcp.json
           if-no-files-found: error
+      - name: Verify refreshed families have hardware mappings
+        run: node --test tests/test_map.js
       - name: Verify generated data is committed
         run: git diff --exit-code -- aws.json azure.json gcp.json
