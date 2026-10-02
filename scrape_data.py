@@ -19,7 +19,26 @@ def fetch_html(provider, url):
         response.raise_for_status()
     except requests.RequestException as exc:
         raise DataRefreshError(f"Failed to fetch {provider} data: {exc}") from exc
-    return response.content
+    content = response.content
+    content_type = getattr(response, "headers", {}).get("content-type", "")
+    if content_type and "html" not in content_type.lower():
+        raise DataRefreshError(
+            f"{provider} source returned unexpected content type: {content_type}"
+        )
+    if not content or b"<html" not in content[:2048].lower():
+        raise DataRefreshError(f"{provider} source did not return an HTML document")
+    title_match = re.search(rb"<title[^>]*>(.*?)</title>", content, re.I | re.S)
+    if title_match and re.search(
+        rb"site unavailable|access denied|request blocked|service unavailable",
+        title_match.group(1),
+        re.I,
+    ):
+        title = re.sub(rb"\s+", b" ", title_match.group(1)).decode(
+            "utf-8", errors="replace"
+        )
+        raise DataRefreshError(f"{provider} source returned an error page: {title}")
+    return content
+
 
 REGION_METADATA_PATH = Path(__file__).with_name("region_metadata.json")
 
@@ -42,6 +61,40 @@ region_metadata = load_region_metadata()
 aws_coordinates = region_metadata["aws"]
 gcp_coordinates = region_metadata["gcp"]
 azure_data = region_metadata["azure"]
+
+AWS_EXCLUDED_REGION_PREFIXES = ("us-gov-",)
+
+# Microsoft documents these GA placements separately from the product-by-region
+# payload. Keep them explicit until that payload includes the family.
+# Verified 2026-10-01; recheck this source during each monthly data review:
+# https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/gpu-accelerated/nc-rtxpro6000-bse-v6-series-overview
+AZURE_DOCUMENTED_GA_OVERRIDES = {
+    "southeast-asia": {"NC_RTXPRO6000BSE_v6"},
+    "west-us-2": {"NC_RTXPRO6000BSE_v6"},
+}
+
+
+def metadata_for(provider, region, metadata):
+    if region not in metadata:
+        raise DataRefreshError(
+            f"{provider} region metadata is missing for: {region}"
+        )
+    record = metadata[region]
+    lat = record.get("lat")
+    lon = record.get("lon")
+    if not isinstance(lat, (int, float)) or not -90 <= lat <= 90:
+        raise DataRefreshError(
+            f"{provider} region metadata has an invalid latitude for: {region}"
+        )
+    if not isinstance(lon, (int, float)) or not -180 <= lon <= 180:
+        raise DataRefreshError(
+            f"{provider} region metadata has an invalid longitude for: {region}"
+        )
+    if not record.get("location"):
+        raise DataRefreshError(
+            f"{provider} region metadata has no location label for: {region}"
+        )
+    return record
 
 
 def get_gcp_data():
@@ -93,16 +146,13 @@ def get_gcp_data():
             if g.strip()
         ]
 
-        if region not in gcp_coordinates:
-            raise DataRefreshError(
-                f"GCP region metadata is missing for: {region}"
-            )
+        metadata = metadata_for("GCP", region, gcp_coordinates)
         record = regions.setdefault(
             region,
             {
                 "region": region,
-                "lat": gcp_coordinates[region]["lat"],
-                "lon": gcp_coordinates[region]["lon"],
+                "lat": metadata["lat"],
+                "lon": metadata["lon"],
                 "location": clean_location,
                 "families": set(),
             },
@@ -121,6 +171,10 @@ def get_aws_data():
     )
     soup = BeautifulSoup(fetch_html("AWS", aws_url), "html.parser")
     h2_tags = soup.find_all("h2", id=re.compile(r"^instance-types-"))
+    if not h2_tags:
+        raise DataRefreshError(
+            "AWS source schema changed; no region headings were found"
+        )
 
     cleaned_data = []
     for h2_tag in h2_tags:
@@ -152,18 +206,16 @@ def get_aws_data():
                 if family.strip()
             )
 
-        if not gpu_types or region.startswith("us-gov-"):
+        # GovCloud is intentionally outside the public/commercial map scope.
+        if not gpu_types or region.startswith(AWS_EXCLUDED_REGION_PREFIXES):
             continue
-        if region not in aws_coordinates:
-            raise DataRefreshError(
-                f"AWS region metadata is missing for: {region}"
-            )
+        metadata = metadata_for("AWS", region, aws_coordinates)
         cleaned_data.append(
             {
                 "region": region,
-                "lat": aws_coordinates[region]["lat"],
-                "lon": aws_coordinates[region]["lon"],
-                "location": aws_coordinates[region]["location"],
+                "lat": metadata["lat"],
+                "lon": metadata["lon"],
+                "location": metadata["location"],
                 "families": sorted(gpu_types),
             }
         )
@@ -181,7 +233,18 @@ def get_azure_data():
         match = re.search(pattern, script_text, re.DOTALL)
         if not match:
             continue
-        candidate = json.loads(match.group(1))
+        try:
+            candidate = json.loads(match.group(1))
+        except json.JSONDecodeError as exc:
+            raise DataRefreshError(
+                "Azure GPU availability data contains invalid JSON"
+            ) from exc
+        if not isinstance(candidate, list) or not all(
+            isinstance(item, dict) for item in candidate
+        ):
+            raise DataRefreshError(
+                "Azure GPU availability data has an unexpected schema"
+            )
         if any(item.get("OfferingName") == "Virtual Machines" for item in candidate):
             data_list = candidate
             break
@@ -193,14 +256,22 @@ def get_azure_data():
     azure_gpu_vms = [
         item
         for item in data_list
-        if item["OfferingName"] == "Virtual Machines"
-        and any(item["ProductSkuName"].startswith(prefix) for prefix in gpu_machine_types)
-        and item["CurrentState"] == "GA"
+        if item.get("OfferingName") == "Virtual Machines"
+        and any(
+            item.get("ProductSkuName", "").startswith(prefix)
+            for prefix in gpu_machine_types
+        )
+        and item.get("CurrentState") == "GA"
     ]
     gpus_per_region = defaultdict(set)
     for vm_type in azure_gpu_vms:
+        region_name = vm_type.get("RegionName")
+        if not isinstance(region_name, str) or not region_name.strip():
+            raise DataRefreshError(
+                "Azure GPU availability data has a VM entry without a region"
+            )
         region = (
-            vm_type["RegionName"]
+            region_name
             .lower()
             .strip()
             .rstrip("*")
@@ -209,21 +280,22 @@ def get_azure_data():
         )
         gpus_per_region[region].add(vm_type["ProductSkuName"])
 
+    for region, families in AZURE_DOCUMENTED_GA_OVERRIDES.items():
+        gpus_per_region[region].update(families)
+
     cleaned_data = []
     reserved_regions = ("china-east-3", "australia-central-2", "korea-south")
     for region in gpus_per_region:
         if region.startswith("usgov") or region in reserved_regions:
             continue
-        if region not in azure_data:
-            raise DataRefreshError(
-                f"Azure region metadata is missing for: {region}"
-            )
+        metadata = metadata_for("Azure", region, azure_data)
         cleaned_data.append(
             {
                 "region": region,
-                "lat": azure_data[region]["lat"],
-                "lon": azure_data[region]["lon"],
-                "location": azure_data[region]["location"],
+                "region_id": metadata.get("region_id", region.replace("-", "")),
+                "lat": metadata["lat"],
+                "lon": metadata["lon"],
+                "location": metadata["location"],
                 "families": sorted(gpus_per_region[region]),
             }
         )

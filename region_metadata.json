@@ -65,10 +65,25 @@
       "location": "Asia Pacific (Malaysia)",
       "lon": 101.6869
     },
+    "ap-southeast-6": {
+      "lat": -36.8485,
+      "location": "Asia Pacific (New Zealand)",
+      "lon": 174.7633
+    },
+    "ap-southeast-7": {
+      "lat": 13.7563,
+      "location": "Asia Pacific (Thailand)",
+      "lon": 100.5018
+    },
     "ca-central-1": {
       "lat": 45.5017,
       "location": "Canada (Central)",
       "lon": -73.5673
+    },
+    "ca-west-1": {
+      "lat": 51.0447,
+      "location": "Canada West (Calgary)",
+      "lon": -114.0719
     },
     "cn-north-1": {
       "lat": 39.9042,
@@ -140,6 +155,11 @@
       "location": "Middle East (Bahrain)",
       "lon": 50.5876
     },
+    "mx-central-1": {
+      "lat": 20.5888,
+      "location": "Mexico (Central)",
+      "lon": -100.3899
+    },
     "sa-east-1": {
       "lat": -23.5505,
       "location": "South America (Sao Paulo)",
@@ -182,6 +202,12 @@
       "location": "Australia Central - Canberra",
       "lon": 149.13
     },
+    "australia-central-2": {
+      "lat": -35.2809,
+      "location": "Australia Central 2 - Canberra",
+      "lon": 149.13,
+      "status": "restricted"
+    },
     "australia-east": {
       "lat": -33.8688,
       "location": "Australia East - New South Wales",
@@ -206,6 +232,12 @@
       "lat": -23.5505,
       "location": "Brazil South - São Paulo State",
       "lon": -46.6333
+    },
+    "brazil-southeast": {
+      "lat": -22.9068,
+      "location": "Brazil Southeast - Rio",
+      "lon": -43.1729,
+      "status": "restricted"
     },
     "canada-central": {
       "lat": 43.6532,
@@ -264,8 +296,9 @@
     },
     "denmark-north-europe-4": {
       "lat": 55.4674,
-      "location": "Denmark North Europe 4 - Esberg",
-      "lon": 8.4506
+      "location": "Denmark North Europe 4 - Esbjerg",
+      "lon": 8.4506,
+      "status": "announced"
     },
     "east-asia": {
       "lat": 22.3193,
@@ -285,12 +318,25 @@
     "east-us-3": {
       "lat": 32.1656,
       "location": "East US 3 - Georgia",
-      "lon": -82.9001
+      "lon": -82.9001,
+      "status": "announced"
     },
     "france-central": {
       "lat": 48.8566,
       "location": "France Central - Paris",
       "lon": 2.3522
+    },
+    "france-south": {
+      "lat": 43.2965,
+      "location": "France South - Marseille",
+      "lon": 5.3698,
+      "status": "restricted"
+    },
+    "germany-north": {
+      "lat": 52.52,
+      "location": "Germany North - Berlin",
+      "lon": 13.405,
+      "status": "restricted"
     },
     "germany-west-central": {
       "lat": 50.1109,
@@ -300,7 +346,8 @@
     "greece-central": {
       "lat": 37.9838,
       "location": "Greece Central - Athens",
-      "lon": 23.7275
+      "lon": 23.7275,
+      "status": "announced"
     },
     "india-south-central": {
       "lat": 17.385,
@@ -337,6 +384,11 @@
       "location": "Korea Central - Seoul",
       "lon": 126.978
     },
+    "korea-south": {
+      "lat": 35.1796,
+      "location": "Korea South - Busan",
+      "lon": 129.0756
+    },
     "malaysia-west": {
       "lat": 3.139,
       "location": "Malaysia West - Kuala Lumpur",
@@ -365,12 +417,19 @@
     "north-europe-3": {
       "lat": 60.1699,
       "location": "North Europe 3 - Helsinki",
-      "lon": 24.9384
+      "lon": 24.9384,
+      "status": "announced"
     },
     "norway-east": {
       "lat": 59.9139,
       "location": "Norway East - Oslo",
       "lon": 10.7522
+    },
+    "norway-west": {
+      "lat": 60.472,
+      "location": "Norway West - Norway",
+      "lon": 8.4689,
+      "status": "restricted"
     },
     "poland-central": {
       "lat": 52.2297,
@@ -385,12 +444,19 @@
     "saudi-arabia-east": {
       "lat": 26.4207,
       "location": "Saudi Arabia East - Dammam",
-      "lon": 50.0888
+      "lon": 50.0888,
+      "status": "announced"
     },
     "south-africa-north": {
       "lat": -26.2041,
       "location": "South Africa North - Johannesburg",
       "lon": 28.0473
+    },
+    "south-africa-west": {
+      "lat": -33.9249,
+      "location": "South Africa West - Cape Town",
+      "lon": 18.4241,
+      "status": "restricted"
     },
     "south-central-us": {
       "lat": 29.4243,
@@ -410,7 +476,8 @@
     "southeast-asia-3": {
       "lat": 1.4927,
       "location": "Southeast Asia 3 - Johor Bahru, Malaysia",
-      "lon": 103.7414
+      "lon": 103.7414,
+      "status": "announced"
     },
     "spain-central": {
       "lat": 40.4168,
@@ -422,10 +489,22 @@
       "location": "Sweden Central - Gävle and Sandviken",
       "lon": 17.1413
     },
+    "sweden-south": {
+      "lat": 60.1282,
+      "location": "Sweden South - Sweden",
+      "lon": 18.6435,
+      "status": "restricted"
+    },
     "switzerland-north": {
       "lat": 47.3769,
       "location": "Switzerland North - Zürich",
       "lon": 8.5417
+    },
+    "switzerland-west": {
+      "lat": 46.2044,
+      "location": "Switzerland West - Geneva",
+      "lon": 6.1432,
+      "status": "restricted"
     },
     "taiwan-north": {
       "lat": 25.033,
@@ -435,7 +514,14 @@
     "thailand-south": {
       "lat": 13.7563,
       "location": "Thailand South - Bangkok",
-      "lon": 100.5018
+      "lon": 100.5018,
+      "status": "announced"
+    },
+    "uae-central": {
+      "lat": 24.4539,
+      "location": "UAE Central - Abu Dhabi",
+      "lon": 54.3773,
+      "status": "restricted"
     },
     "uae-north": {
       "lat": 25.2048,
@@ -461,6 +547,11 @@
       "lat": 52.1326,
       "location": "West Europe - Netherlands",
       "lon": 5.2913
+    },
+    "west-india": {
+      "lat": 19.076,
+      "location": "West India - Mumbai",
+      "lon": 72.8777
     },
     "west-us": {
       "lat": 36.7783,

@@ -27,7 +27,6 @@
     "location": "Asia Pacific (Tokyo)",
     "families": [
       "F2",
-      "G4ad",
       "G4dn",
       "G5",
       "G5g",
@@ -112,6 +111,7 @@
     "families": [
       "G6",
       "G6e",
+      "P6-B200",
       "P6-B300"
     ]
   },
@@ -157,9 +157,11 @@
     "families": [
       "G5",
       "G5g",
+      "G7e",
       "P5",
       "P5e",
-      "P5en"
+      "P5en",
+      "P6-B300"
     ]
   },
   {
@@ -189,7 +191,6 @@
     "location": "Canada (Central)",
     "families": [
       "F2",
-      "G4ad",
       "G4dn",
       "G5",
       "G6",
@@ -231,7 +232,6 @@
     "families": [
       "DL2q",
       "F2",
-      "G4ad",
       "G4dn",
       "G5",
       "G5g",
@@ -276,7 +276,8 @@
       "P4d",
       "P5",
       "P5e",
-      "P5en"
+      "P5en",
+      "P6-B200"
     ]
   },
   {
@@ -313,7 +314,6 @@
     "lon": -6.2603,
     "location": "Europe (Ireland)",
     "families": [
-      "G4ad",
       "G4dn",
       "G5",
       "Inf1",
@@ -330,7 +330,6 @@
     "location": "Europe (London)",
     "families": [
       "F2",
-      "G4ad",
       "G4dn",
       "G5",
       "G6",
@@ -356,7 +355,8 @@
       "G6",
       "Gr6",
       "Inf1",
-      "Inf2"
+      "Inf2",
+      "P6-B200"
     ]
   },
   {
@@ -417,6 +417,7 @@
       "P4d",
       "P5",
       "P5e",
+      "P6-B300",
       "Trn2"
     ]
   },
@@ -427,7 +428,6 @@
     "location": "US East (N. Virginia)",
     "families": [
       "F2",
-      "G4ad",
       "G4dn",
       "G5",
       "G5g",
@@ -458,7 +458,6 @@
     "lon": -82.9988,
     "location": "US East (Ohio)",
     "families": [
-      "G4ad",
       "G4dn",
       "G5",
       "G6",
@@ -500,7 +499,6 @@
     "families": [
       "DL2q",
       "F2",
-      "G4ad",
       "G4dn",
       "G5",
       "G5g",

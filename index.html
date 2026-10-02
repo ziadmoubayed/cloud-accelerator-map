@@ -389,8 +389,8 @@
             </span>
             <div>
               <p class="text-sm font-medium text-green-800">Add your data center locations</p>
-              <p class="text-xs text-green-700 mt-0.5">Enter coordinates below, then click markers on the map to find
-                the nearest cloud GPU regions.</p>
+              <p class="text-xs text-green-700 mt-0.5">Enter coordinates below to see the nearest cloud GPU regions.
+                Use the location selector or click a green marker to switch locations.</p>
             </div>
           </div>
         </div>
@@ -411,6 +411,7 @@
                   <pre class="text-left text-xs bg-gray-900 p-2 rounded"><code>{
   "Name": {"lat": 52.36, "lng": 4.90}
 }</code></pre>
+                  <p class="mt-1">Longitude accepts either lng or lon.</p>
                 </div>
                 <div class="w-3 h-3 -mt-2 rotate-45 bg-gray-800"></div>
               </div>
@@ -420,7 +421,7 @@
             placeholder='{"Amsterdam, NL": {"lat": 52.36, "lng": 4.90}, "San Jose, US": {"lat": 37.33, "lng": -121.88}}'
             class="block w-full text-xs mono border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 rounded-md shadow-sm"></textarea>
           <div class="flex justify-between items-center mt-2">
-            <p id="json-status" class="text-xs text-gray-500"></p>
+            <p id="json-status" class="text-xs text-gray-500" role="status" aria-live="polite"></p>
             <button id="update-dcs-btn"
               class="bg-indigo-600 text-white text-sm font-medium py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Update
               Map</button>
@@ -495,6 +496,12 @@
       <hr class="my-4">
 
       <!-- Results Section (outside tabs, always visible) -->
+      <div id="location-selector-container" class="mb-3 hidden">
+        <label for="location-select" class="block text-sm font-medium text-gray-700">Find regions near</label>
+        <select id="location-select" class="mt-1 w-full rounded-md border border-gray-300 p-2"></select>
+        <p class="mt-1 text-xs text-gray-500">Approximate straight-line distance, not network latency.</p>
+      </div>
+      <p id="data-status" class="text-sm text-gray-600 mb-2" role="status" aria-live="polite">Loading provider data…</p>
       <div id="results" class="text-sm">
         <div id="results-placeholder" class="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -505,7 +512,7 @@
               d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
           <h3 class="mt-2 text-sm font-medium text-gray-900">Select a Location</h3>
-          <p class="mt-1 text-sm text-gray-500">Click a green marker on the map to find the nearest cloud regions.</p>
+          <p class="mt-1 text-sm text-gray-500">Add coordinates in Your Locations, then choose a location or click a green marker.</p>
         </div>
         <div id="results-content" class="hidden"></div>
       </div>
@@ -523,19 +530,34 @@
     <div class="flex items-center text-xs"><span
         class="inline-block w-3 h-3 bg-violet-500 rounded-full mr-2 border border-gray-400"></span> Azure Region</div>
     <div class="flex items-center text-xs mt-1"><span class="inline-block w-3 h-3 mr-2">⚠️</span> <span
-        class="text-gray-600">Points in the same location are slightly offset for visibility</span></div>
+        class="text-gray-600">Region coordinates and distances are approximate</span></div>
   </div>
   <script>
     // --- Data (loaded from JSON) ---
     let gcpData = [];
     let awsData = [];
     let azureData = [];
+    let dataReady = false;
+
+    async function loadProviderData(file) {
+      const response = await fetch(file);
+      if (!response.ok) throw new Error(`${file}: HTTP ${response.status}`);
+      const records = await response.json();
+      if (!Array.isArray(records) || records.length === 0) throw new Error(`${file}: no provider records`);
+      for (const record of records) {
+        if (!record || typeof record.region !== 'string' || !validCoordinates(record.lat, record.lon ?? record.lng)
+          || !Array.isArray(record.families) || !record.families.every(f => typeof f === 'string')) {
+          throw new Error(`${file}: invalid region data`);
+        }
+      }
+      return records;
+    }
 
     async function loadData() {
       const [gcpRaw, awsRaw, azureRaw] = await Promise.all([
-        fetch('gcp.json').then(r => r.json()),
-        fetch('aws.json').then(r => r.json()),
-        fetch('azure.json').then(r => r.json())
+        loadProviderData('gcp.json'),
+        loadProviderData('aws.json'),
+        loadProviderData('azure.json')
       ]);
 
       // GCP JSON has per-zone entries; consolidate per region
@@ -582,6 +604,7 @@
       // --- AWS P-Series (High Performance) ---
       "P6e-GB200": "NVIDIA GB200 NVL72 (Grace Blackwell)",
       "P6-B200": "NVIDIA Blackwell B200",
+      "P6-B300": "NVIDIA Blackwell Ultra B300",
       "P5": "NVIDIA H100",
       "P5e": "NVIDIA H200",
       "P5en": "NVIDIA H200 (enhanced network)",
@@ -615,6 +638,7 @@
       "VT1": "Video transcoding (non-GPU)",
 
       // --- Azure N-Series ---
+      "NC_RTXPRO6000BSE_v6": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
       "NCads A100 v4-Series": "NVIDIA A100 80GB",
       "NCadsH100_v5-series": "NVIDIA H100",
       "NCCadsH100_v5-series": "NVIDIA H100 (Confidential)",
@@ -634,7 +658,7 @@
     };
 
     // Updated order to prioritize Blackwell (GB/B/RTX PRO)
-    const CATEGORY_ORDER = ["GB", "B200", "RTX PRO", "H200", "H100", "L40S", "A100", "L4", "A10G", "T4", "Others"];
+    const CATEGORY_ORDER = ["GB", "B300", "B200", "RTX PRO", "H200", "H100", "L40S", "A100", "L4", "A10G", "T4", "Others"];
 
     // --- UX State ---
     let userDCs = {};
@@ -644,10 +668,12 @@
 
     // --- Map Setup ---
     const map = L.map('map').setView([20, 0], 2.5);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 20
+    // Normal interactive viewing only; honour browser caching and OSM attribution.
+    // https://operations.osmfoundation.org/policies/tiles/
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+      referrerPolicy: 'strict-origin-when-cross-origin'
     }).addTo(map);
 
     const dcLayer = L.layerGroup().addTo(map);
@@ -667,8 +693,9 @@
 
       switch (type) {
         case 'P6e-GB200': return 'GB';
+        case 'P6-B300': return 'B300';
         case 'P6-B200': return 'B200';
-        case 'G4': case 'G7e': return 'RTX PRO';
+        case 'G4': case 'G7e': case 'NC_RTXPRO6000BSE_v6': return 'RTX PRO';
         case 'P5e': case 'P5en':
         case 'NDsr H200 v5-Series':
           return 'H200';
@@ -693,13 +720,42 @@
       azureData.forEach(dc => { (dc.families || []).forEach(t => { const cat = categorize(t, 'Azure'); index[cat] ||= { GCP: new Set(), AWS: new Set(), Azure: new Set() }; index[cat].Azure.add(t); }); });
       return index;
     }
-    function getDistance(lat1, lon1, lat2, lon2) { const R = 6371; const dLat = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180; const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2; return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); }
+    function validCoordinates(lat, lng) {
+      return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
+    }
+
+    function parseLocations(json) {
+      const input = JSON.parse(json.trim() || '{}');
+      if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('JSON must be an object keyed by location name.');
+      const result = Object.create(null);
+      for (const [name, coordinates] of Object.entries(input)) {
+        if (!name.trim() || !coordinates || typeof coordinates !== 'object' || Array.isArray(coordinates)) {
+          throw new Error(`Invalid location: "${name}".`);
+        }
+        const { lat, lng, lon } = coordinates;
+        if (lng !== undefined && lon !== undefined && lng !== lon) throw new Error(`Conflicting lng and lon for "${name}".`);
+        if (!validCoordinates(lat, lng ?? lon)) throw new Error(`"${name}" needs numeric lat (-90 to 90) and lng or lon (-180 to 180).`);
+        result[name] = { lat, lng: lng ?? lon };
+      }
+      return result;
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const radians = Math.PI / 180;
+      const a = Math.sin((lat2 - lat1) * radians / 2) ** 2
+        + Math.cos(lat1 * radians) * Math.cos(lat2 * radians) * Math.sin((lon2 - lon1) * radians / 2) ** 2;
+      const clamped = Math.max(0, Math.min(1, a)); // Avoid NaN for nearly antipodal points.
+      return 2 * 6371 * Math.atan2(Math.sqrt(clamped), Math.sqrt(1 - clamped));
+    }
 
     // --- URL State Management ---
     function updateUrlWithState() {
       const provider = document.querySelector('input[name="provider"]:checked').value;
       const selectedTypes = getSelectedAcceleratorTypes();
-      const locationsJson = document.getElementById('dc-json-input').value;
       const params = new URLSearchParams();
 
       if (provider !== 'all') {
@@ -708,16 +764,11 @@
       if (selectedTypes.length > 0) {
         params.set('gpus', selectedTypes.join(','));
       }
-      if (locationsJson.trim().length > 2) {
-        try {
-          JSON.parse(locationsJson); // Validate before encoding
-          params.set('locations', btoa(encodeURIComponent(locationsJson)));
-        } catch (e) {
-          console.warn("Could not set locations in URL due to invalid JSON.");
-        }
-      }
+      // Save only validated, applied locations; unfinished textarea edits aren't map state.
+      if (Object.keys(userDCs).length) params.set('locations', btoa(encodeURIComponent(JSON.stringify(userDCs))));
+      if (selectedDC) params.set('selected', selectedDC.name);
       // Use replaceState to avoid polluting browser history on every filter change
-      history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+      history.replaceState({}, '', `${window.location.pathname}${params.size ? '?' + params.toString() : ''}`);
     }
 
     function loadStateFromUrl() {
@@ -752,7 +803,10 @@
         try {
           const locationsJson = decodeURIComponent(atob(locationsB64));
           document.getElementById('dc-json-input').value = locationsJson;
-          userDCs = JSON.parse(locationsJson);
+          userDCs = parseLocations(locationsJson);
+          const requested = params.get('selected');
+          const name = requested !== null && Object.hasOwn(userDCs, requested) ? requested : Object.keys(userDCs)[0];
+          selectedDC = name ? { name, ...userDCs[name] } : null;
           jsonStatus.textContent = `Loaded ${Object.keys(userDCs).length} locations from URL.`;
           jsonStatus.className = 'text-xs text-green-600';
         } catch (e) {
@@ -769,13 +823,12 @@
     // Helper to sync category checkboxes based on the raw select state
     function updateCategoryCheckboxesFromRawSelect() {
       const selectedRawTypes = new Set(Array.from(document.getElementById('gpu-type').selectedOptions).map(o => o.value));
-      const selectedCats = new Set();
-      selectedRawTypes.forEach(type => {
-        selectedCats.add(categorize(type, '')); // Provider doesn't matter for categorization
-      });
-
+      const options = Array.from(document.getElementById('gpu-type').options);
       document.querySelectorAll('.category-checkbox').forEach(cb => {
-        cb.checked = selectedCats.has(cb.dataset.category);
+        const types = options.filter(o => categorize(o.value, '') === cb.dataset.category);
+        const count = types.filter(o => selectedRawTypes.has(o.value)).length;
+        cb.checked = types.length > 0 && count === types.length;
+        cb.indeterminate = count > 0 && count < types.length;
       });
     }
 
@@ -796,9 +849,11 @@
         cb.type = 'checkbox';
         cb.className = 'mr-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 category-checkbox';
         cb.dataset.category = cat;
+        cb.setAttribute('aria-label', cat);
         cb.addEventListener('click', e => e.stopPropagation());
         cb.addEventListener('change', () => {
           applyCategorySelectionToRawSelect();
+          updateCategoryCheckboxesFromRawSelect();
           triggerUpdate();
         });
         leftSide.appendChild(cb);
@@ -850,6 +905,7 @@
         row.appendChild(body);
         container.appendChild(row);
       });
+      updateCategoryCheckboxesFromRawSelect();
     }
 
     function updateGpuFilter() {
@@ -873,24 +929,14 @@
 
     // --- State and Update Logic ---
     function getSelectedAcceleratorTypes() {
-      const fromSelect = new Set(Array.from(document.getElementById('gpu-type').selectedOptions).map(o => o.value));
-      const selectedCats = new Set(Array.from(document.querySelectorAll('.category-checkbox:checked')).map(cb => cb.dataset.category));
-      if (selectedCats.size === 0) return [...fromSelect];
-      const idx = buildCategoryIndex();
-      const out = new Set(fromSelect);
-      selectedCats.forEach(cat => {
-        if (!idx[cat]) return;
-        idx[cat].GCP.forEach(t => out.add(t));
-        idx[cat].AWS.forEach(t => out.add(t));
-        idx[cat].Azure.forEach(t => out.add(t));
-      });
-      return [...out];
+      // The raw select is authoritative: category indicators must not broaden a
+      // specific family selection when a saved URL is restored.
+      return Array.from(document.getElementById('gpu-type').selectedOptions).map(o => o.value);
     }
 
     function applyCategorySelectionToRawSelect() {
       const sel = document.getElementById('gpu-type');
       const selectedCats = new Set(Array.from(document.querySelectorAll('.category-checkbox:checked')).map(cb => cb.dataset.category));
-      if (selectedCats.size === 0) return;
       const idx = buildCategoryIndex();
       const selectedTypes = new Set();
       selectedCats.forEach(cat => {
@@ -904,11 +950,31 @@
 
     function handleDCClick(name, lat, lng) {
       selectedDC = { name, lat, lng };
+      map.setView([lat, lng], Math.max(map.getZoom(), 5));
       triggerUpdate();
     }
 
+    function updateLocationSelector() {
+      const select = document.getElementById('location-select');
+      select.replaceChildren();
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'Choose a location';
+      select.appendChild(placeholder);
+      Object.keys(userDCs).forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        select.appendChild(option);
+      });
+      select.value = selectedDC?.name || '';
+      document.getElementById('location-selector-container').classList.toggle('hidden', Object.keys(userDCs).length === 0);
+      updateCompareButtonState();
+    }
+
     function triggerUpdate() {
-      if (isLoadingFromUrl) return; // Prevent updates while loading from URL
+      if (isLoadingFromUrl || !dataReady) return;
+      updateLocationSelector();
       updateMap();
       if (selectedDC) {
         updateResults(selectedDC.name, selectedDC.lat, selectedDC.lng);
@@ -949,12 +1015,13 @@
         const marker = L.circleMarker([c.lat, c.lng], {
           pane: 'dcPane', // Render in the dedicated pane
           radius: isSelected ? 11 : 8,
-          fill: false,
+          fill: true,
+          fillOpacity: 0.15,
           color: isSelected ? '#059669' : '#16a34a',
           weight: isSelected ? 5 : 4,
           opacity: 1,
         }).addTo(dcLayer);
-        marker.bindPopup(`<b>Your Location</b><br>${name}`);
+        marker.bindPopup(`<b>Your Location</b><br>${escapeHtml(name)}`);
         marker.on('click', () => handleDCClick(name, c.lat, c.lng));
         dcMarkers[name] = marker;
       }
@@ -987,7 +1054,7 @@
 
       contentDiv.innerHTML = `
                 <div class="flex justify-between items-center mb-2">
-                    <h3 class="font-bold text-gray-800">Closest Regions to ${dcName}</h3>
+                    <h3 class="font-bold text-gray-800">Closest Regions to ${escapeHtml(dcName)}</h3>
                     <button id="clear-selection-btn" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold">Clear</button>
                 </div>`;
 
@@ -1068,7 +1135,12 @@
 
     // --- Event Listeners ---
     document.querySelectorAll('input[name="provider"]').forEach(r => r.addEventListener('change', () => { updateGpuFilter(); renderCategoryFilter(); triggerUpdate(); }));
-    document.getElementById('gpu-type').addEventListener('change', triggerUpdate);
+    document.getElementById('gpu-type').addEventListener('change', () => { updateCategoryCheckboxesFromRawSelect(); triggerUpdate(); });
+    document.getElementById('location-select').addEventListener('change', e => {
+      const name = e.target.value;
+      if (Object.hasOwn(userDCs, name)) handleDCClick(name, userDCs[name].lat, userDCs[name].lng);
+      else resetSelection();
+    });
     document.getElementById('reset-filters-btn').addEventListener('click', () => {
       document.getElementById('provider-all').checked = true;
       document.querySelectorAll('.category-checkbox').forEach(cb => cb.checked = false);
@@ -1076,33 +1148,20 @@
       updateGpuFilter();
       renderCategoryFilter();
       triggerUpdate();
-      // Clear URL state (keep only locations if present)
-      const params = new URLSearchParams(window.location.search);
-      const locations = params.get('locations');
-      const newParams = new URLSearchParams();
-      if (locations) newParams.set('locations', locations);
-      history.replaceState({}, '', `${window.location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`);
     });
     const dcInput = document.getElementById('dc-json-input');
     const jsonStatus = document.getElementById('json-status');
     document.getElementById('update-dcs-btn').addEventListener('click', () => {
       try {
-        const newDCs = JSON.parse(dcInput.value || '{}');
-        if (typeof newDCs !== 'object' || newDCs === null || Array.isArray(newDCs)) {
-          throw new Error("JSON must be an object.");
-        }
-        for (const key in newDCs) {
-          if (typeof newDCs[key].lat !== 'number' || typeof newDCs[key].lng !== 'number') {
-            throw new Error(`Invalid format for "${key}". Missing lat/lng numbers.`);
-          }
-        }
+        const newDCs = parseLocations(dcInput.value);
         userDCs = newDCs;
         dcInput.classList.remove('border-red-500');
         dcInput.classList.add('border-gray-300');
         jsonStatus.textContent = `Updated with ${Object.keys(userDCs).length} locations.`;
         jsonStatus.className = 'text-xs text-green-600';
-        resetSelection();
-        updateCompareButtonState();
+        const name = selectedDC && Object.hasOwn(userDCs, selectedDC.name) ? selectedDC.name : Object.keys(userDCs)[0];
+        if (name) handleDCClick(name, userDCs[name].lat, userDCs[name].lng);
+        else resetSelection();
       } catch (e) {
         dcInput.classList.add('border-red-500');
         dcInput.classList.remove('border-gray-300');
@@ -1114,7 +1173,7 @@
     // --- Compare All Locations ---
     function updateCompareButtonState() {
       const btn = document.getElementById('compare-all-btn');
-      btn.disabled = Object.keys(userDCs).length === 0;
+      btn.disabled = !dataReady || Object.keys(userDCs).length === 0;
     }
 
     function generateComparisonTable() {
@@ -1185,7 +1244,7 @@
       rows.forEach(r => {
         const winClass = winClasses[r.closer] || 'winner-tie';
         html += `<tr>`;
-        html += `<td class="font-medium">${r.name}</td>`;
+        html += `<td class="font-medium">${escapeHtml(r.name)}</td>`;
         visibleProviders.forEach(p => {
           const best = r.bests[p];
           if (best) {
@@ -1218,7 +1277,7 @@
       md += '| ' + mdHeader.join(' | ') + ' |\n';
       md += '| ' + mdHeader.map(() => '---').join(' | ') + ' |\n';
       rows.forEach(r => {
-        const cols = [r.name];
+        const cols = [r.name.replace(/\|/g, '\\|').replace(/[\r\n]/g, ' ')];
         visibleProviders.forEach(p => {
           const best = r.bests[p];
           if (best) {
@@ -1247,14 +1306,23 @@
     document.getElementById('compare-all-btn').addEventListener('click', generateComparisonTable);
 
     // --- Initial Setup ---
-    (async function init() {
-      await loadData();
-      updateGpuFilter();
-      renderCategoryFilter();
-      updateMap();
-      loadStateFromUrl();
-      updateCompareButtonState();
-    })();
+    document.getElementById('update-dcs-btn').disabled = true;
+    async function init() {
+      try {
+        await loadData();
+        dataReady = true;
+        updateGpuFilter();
+        renderCategoryFilter();
+        loadStateFromUrl();
+        document.getElementById('data-status').textContent = '';
+        document.getElementById('update-dcs-btn').disabled = false;
+      } catch (error) {
+        console.error('Unable to initialize accelerator data:', error);
+        document.getElementById('data-status').textContent = 'Provider data could not be loaded. Reload the page to retry.';
+        document.getElementById('data-status').className = 'text-sm text-red-600 mb-2';
+      }
+    }
+    init();
   </script>
 </body>
 
