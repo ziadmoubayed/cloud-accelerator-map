@@ -36,5 +36,7 @@ jobs:
             azure.json
             gcp.json
           if-no-files-found: error
+      - name: Verify refreshed families have hardware mappings
+        run: node --test tests/test_map.js
       - name: Verify generated data is committed
         run: git diff --exit-code -- aws.json azure.json gcp.json
