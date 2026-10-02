@@ -290,6 +290,8 @@
     .unmapped-badge { border: 1px dashed #9CA3AF; background: white; color: #4B5563; }
     .selection-chip { display: inline-flex; align-items: center; gap: .35rem; text-align: left; line-height: 1.4; }
     .selection-chip:hover { filter: brightness(.96); }
+    .hardware-selection { position: sticky; top: 0; z-index: 2; }
+    #selected-hardware { max-height: 120px; overflow-y: auto; }
 
     .reset-btn {
       font-size: 0.75rem;
@@ -382,6 +384,16 @@
       <div class="panel-tabs">
         <button class="panel-tab active" data-tab="filters">Filters</button>
         <button class="panel-tab" data-tab="locations">Your Locations</button>
+      </div>
+
+      <!-- Active selection stays visible while browsing either tab. -->
+      <div class="hardware-selection mb-4 rounded-lg bg-indigo-50 p-3">
+        <div class="flex justify-between items-center">
+          <h3 class="text-sm font-medium text-gray-800">Selected hardware</h3>
+          <button id="clear-hardware-btn" class="reset-btn">Clear hardware</button>
+        </div>
+        <p id="selection-status" class="text-xs text-gray-600 mt-1" role="status" aria-live="polite"></p>
+        <div id="selected-hardware" class="mt-1"></div>
       </div>
 
       <!-- Locations Tab -->
@@ -496,15 +508,6 @@
         <p class="text-xs text-gray-500 mt-2">Region counts come from this map's data. “Region mapping unavailable” means the hardware is documented but cannot yet be placed on this map—not that the provider lacks it.</p>
         <!-- Backing state keeps existing gpus= shared links compatible. -->
         <select id="gpu-type" multiple hidden aria-hidden="true" tabindex="-1"></select>
-      </div>
-
-      <div class="mt-3 rounded-lg bg-indigo-50 p-3">
-        <div class="flex justify-between items-center">
-          <h3 class="text-sm font-medium text-gray-800">Selected hardware</h3>
-          <button id="clear-hardware-btn" class="reset-btn">Clear hardware</button>
-        </div>
-        <p id="selection-status" class="text-xs text-gray-600 mt-1" role="status" aria-live="polite"></p>
-        <div id="selected-hardware" class="mt-1"></div>
       </div>
 
       <hr class="my-4">
@@ -896,7 +899,7 @@
         container.appendChild(row);
       });
       if (!count) { const empty = document.createElement('p'); empty.className = 'text-sm text-gray-500 p-3'; empty.textContent = 'No hardware matches this search. Clear search or change provider.'; container.appendChild(empty); }
-      document.getElementById('hardware-count').textContent = `${count} hardware models · ${entries.length} provider families`;
+      document.getElementById('hardware-count').textContent = `${count} hardware model${count === 1 ? '' : 's'} · ${entries.length} provider famil${entries.length === 1 ? 'y' : 'ies'}`;
       updateCategoryCheckboxesFromRawSelect();
     }
 
@@ -945,7 +948,7 @@
         chip.addEventListener('click', () => setFamilySelection([family], false));
         container.appendChild(chip);
       });
-      let message = selected.length ? `${selected.length} selected families · ${active} active in ${provider === 'all' ? 'all providers' : provider.toUpperCase()}` : 'No hardware restriction — showing all mapped accelerator families.';
+      let message = selected.length ? `${selected.length} selected famil${selected.length === 1 ? 'y' : 'ies'} · ${active} active in ${provider === 'all' ? 'all providers' : provider.toUpperCase()}` : 'No hardware restriction — showing all mapped accelerator families.';
       if (selected.length && !active) message += ' No mapped regions can match. Clear hardware or change provider.';
       document.getElementById('selection-status').textContent = message;
       document.getElementById('clear-hardware-btn').disabled = selected.length === 0;
