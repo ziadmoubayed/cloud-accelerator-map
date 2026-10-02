@@ -84,6 +84,7 @@
     "Trn1": {"provider": "AWS", "model": "Trainium", "variant": "Trainium; not a GPU"},
     "Trn1n": {"provider": "AWS", "model": "Trainium", "variant": "Trainium; network-optimized; not a GPU"},
     "Trn2": {"provider": "AWS", "model": "Trainium2", "variant": "Trainium2; not a GPU"},
+    "Trn2u": {"provider": "AWS", "model": "Trainium2", "variant": "Trainium2; UltraServer; not a GPU", "source": "https://aws.amazon.com/ec2/instance-types/trn2/"},
     "Inf1": {"provider": "AWS", "model": "Inferentia", "variant": "Inferentia; not a GPU"},
     "Inf2": {"provider": "AWS", "model": "Inferentia2", "variant": "Inferentia2; not a GPU"},
     "DL1": {"provider": "AWS", "model": "Gaudi", "variant": "Habana Gaudi; not a GPU"},
