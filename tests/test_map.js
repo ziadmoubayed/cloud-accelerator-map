@@ -10,6 +10,7 @@ const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];
 const snapshots = Object.fromEntries(['gcp', 'aws', 'azure'].map(p => [p + '.json', JSON.parse(fs.readFileSync(path.join(root, p + '.json'), 'utf8'))]));
+snapshots['accelerator_catalog.json'] = JSON.parse(fs.readFileSync(path.join(root, 'accelerator_catalog.json'), 'utf8'));
 
 async function app({ search = '', responses = {} } = {}) {
   const ids = new Map();
@@ -68,8 +69,9 @@ async function app({ search = '', responses = {} } = {}) {
   const L = { map: () => map, tileLayer: (url, options) => { tile = { url, options }; return layer(); }, layerGroup: layer, markerClusterGroup: layer, circleMarker: marker, marker, polyline: marker, divIcon: o => o, Point: function() {} };
   const location = { pathname: '/', search };
   const errors = [];
+  let copiedMarkdown = '';
   const context = vm.createContext({ document, L, window: { location }, URLSearchParams, btoa, atob, setTimeout,
-    navigator: { clipboard: { writeText: async () => {} } }, console: { error: (...args) => errors.push(args), warn() {} },
+    navigator: { clipboard: { writeText: async text => { copiedMarkdown = text; } } }, console: { error: (...args) => errors.push(args), warn() {} },
     history: { replaceState(a, b, url) { location.search = new URL(url, 'https://example.test').search; } },
     fetch: async file => responses[file] || { ok: true, json: async () => snapshots[file] },
   });
@@ -77,7 +79,7 @@ async function app({ search = '', responses = {} } = {}) {
   const run = code => vm.runInContext(code, context);
   const plain = code => JSON.parse(JSON.stringify(run(code)));
   const input = value => { ids.get('dc-json-input').value = value; ids.get('update-dcs-btn').fire('click'); };
-  return { run, plain, ids, input, location, map, tile, errors, queryAll };
+  return { run, plain, ids, input, location, map, tile, errors, queryAll, copiedMarkdown: () => copiedMarkdown };
 }
 
 test('page loads all three current snapshots and uses an attributed, keyless basemap', async () => {
@@ -190,7 +192,7 @@ test('distance formula handles zero, dateline, and antipodes', async () => {
 test('new Blackwell families appear in their GPU categories', async () => {
   const a = await app();
   assert.equal(a.run('categorize("P6-B300", "AWS")'), 'B300');
-  assert.equal(a.run('categorize("NC_RTXPRO6000BSE_v6", "Azure")'), 'RTX PRO');
+  assert.equal(a.run('categorize("NC_RTXPRO6000BSE_v6", "Azure")'), 'RTX PRO 6000');
 });
 
 test('provider and family filters apply to ranked results and comparison', async () => {
@@ -205,7 +207,7 @@ test('provider and family filters apply to ranked results and comparison', async
   assert.equal(rows.length, 5);
   for (const row of rows) {
     assert.match(row.innerHTML, /chip-aws/);
-    assert.match(row.innerHTML, /Matches: P5</);
+    assert.match(row.innerHTML, /Matches: NVIDIA H100 \[P5\]</);
     assert.doesNotMatch(row.innerHTML, /chip-gcp|chip-azure|NaN/);
   }
   a.ids.get('compare-all-btn').fire('click');
@@ -227,5 +229,184 @@ test('failed or malformed provider loads show an error and disable proximity', a
     assert.equal(a.run('dataReady'), false);
     assert.match(a.ids.get('data-status').textContent, /could not be loaded/);
     assert.equal(a.ids.get('update-dcs-btn').disabled, true);
+  }
+});
+
+test('every mapped provider family has an explicit reviewed hardware entry', () => {
+  const catalog = snapshots['accelerator_catalog.json'];
+  assert.equal(catalog.schema_version, 1);
+  assert.match(catalog.verified_on, /^\d{4}-\d{2}-\d{2}$/);
+  for (const [provider, file] of [['GCP', 'gcp.json'], ['AWS', 'aws.json'], ['Azure', 'azure.json']]) {
+    for (const family of new Set(snapshots[file].flatMap(record => record.families))) {
+      const entry = catalog.families[family];
+      assert.ok(entry, `Unclassified family needs review: ${provider} ${family}`);
+      assert.equal(entry.provider, provider, `Wrong provider for ${family}`);
+      assert.ok(catalog.models[entry.model], `Unknown model for ${family}`);
+      assert.notEqual(entry.model, 'Unclassified');
+      assert.equal(typeof entry.variant, 'string');
+      assert.match(entry.source || catalog.sources[provider], /^https:\/\//);
+    }
+  }
+});
+
+test('GB and GPU-only Blackwell systems are distinct; unknown names are not guessed', async () => {
+  const a = await app();
+  for (const [family, provider, model] of [
+    ['A4X Max', 'GCP', 'GB300'], ['A4X', 'GCP', 'GB200'], ['A4', 'GCP', 'B200'],
+    ['P6e-GB300', 'AWS', 'GB300'], ['P6e-GB200', 'AWS', 'GB200'],
+    ['P6-B300', 'AWS', 'B300'], ['P6-B200', 'AWS', 'B200'],
+    ['G7', 'AWS', 'RTX PRO 4500'], ['G7e', 'AWS', 'RTX PRO 6000'],
+    ['G4 (Fractional GPU)', 'GCP', 'RTX PRO 6000'],
+    ['NVadsA10_v5-series', 'Azure', 'A10'], ['G5', 'AWS', 'A10G'],
+    ['NDsr MI300X v5-Series', 'Azure', 'MI300X'],
+  ]) assert.equal(a.run(`categorize(${JSON.stringify(family)}, ${JSON.stringify(provider)})`), model);
+  for (const family of ['P6e', 'A4X Future', 'A3 Future', '__proto__', 'constructor']) {
+    assert.equal(a.run(`categorize(${JSON.stringify(family)}, '')`), 'Unclassified');
+  }
+  assert.equal(a.run('categorize("A4X Max", "AWS")'), 'Unclassified');
+});
+
+test('model search selects every confirmed GB300 offering without inventing mapped regions', async () => {
+  const a = await app();
+  a.ids.get('hardware-search').value = 'GB300'; a.ids.get('hardware-search').fire('input');
+  const entries = a.plain('getFilteredFamilyEntries().map(e => ({ family: e.family, model: e.model, regions: e.regions.size }))');
+  assert.ok(entries.some(e => e.family === 'A4X Max' && e.regions > 0));
+  assert.ok(entries.some(e => e.family === 'P6e-GB300' && e.regions === 0));
+  assert.ok(entries.some(e => e.family === 'ND GB300-v6' && e.regions === 0));
+  assert.equal(entries.every(e => e.model === 'GB300'), true);
+  const aws = a.queryAll('.family-checkbox').find(e => e.dataset.family === 'P6e-GB300');
+  assert.equal(aws.disabled, false);
+  const model = a.queryAll('.category-checkbox').find(e => e.dataset.category === 'GB300');
+  model.checked = true; model.fire('change');
+  assert.deepEqual(a.plain('getSelectedAcceleratorTypes()'), ['A4X Max', 'ND GB300-v6', 'P6e-GB300']);
+  a.ids.get('hardware-search').value = 'B300'; a.ids.get('hardware-search').fire('input');
+  assert.deepEqual(a.plain('getFilteredFamilyEntries().map(e => e.family)'), ['P6-B300']);
+});
+
+test('AWS GB300 is selectable and shareable while missing regional coverage stays explicit', async () => {
+  const a = await app();
+  a.ids.get('provider-all').checked = false; a.ids.get('provider-aws').checked = true;
+  a.ids.get('provider-aws').fire('change');
+  a.ids.get('hardware-search').value = 'GB300'; a.ids.get('hardware-search').fire('input');
+  const model = a.queryAll('.category-checkbox').find(e => e.dataset.category === 'GB300');
+  assert.equal(model.disabled, false);
+  model.checked = true; model.fire('change');
+  assert.deepEqual(a.plain('getSelectedAcceleratorTypes()'), ['P6e-GB300']);
+  assert.equal(new URLSearchParams(a.location.search).get('gpus'), 'P6e-GB300');
+  assert.match(a.ids.get('selected-hardware').children[0].textContent, /AWS.*P6e-GB300.*NVIDIA GB300.*provider confirmed/);
+  assert.match(a.ids.get('selection-status').textContent, /1 active in AWS.*regions not yet verified/);
+  a.input('{"Amsterdam":{"lat":52.36,"lng":4.9}}');
+  assert.match(a.ids.get('results-content').innerHTML, /Provider-confirmed offerings.*AWS NVIDIA GB300.*distance rankings are incomplete/i);
+  assert.doesNotMatch(a.ids.get('results-content').innerHTML, /No regions match/);
+  assert.equal(a.run('awsLayer.layers.length'), 0);
+  assert.equal(a.run('linesLayer.layers.length'), 0);
+  a.ids.get('compare-all-btn').fire('click');
+  assert.match(a.run('document.body.innerHTML'), /Provider confirmed; regions not verified/);
+  a.ids.get('copy-md-btn').fire('click');
+  assert.match(a.copiedMarkdown(), /AWS NVIDIA GB300.*Distance rankings are incomplete/);
+  const restored = await app({ search: a.location.search });
+  assert.deepEqual(restored.plain('getSelectedAcceleratorTypes()'), ['P6e-GB300']);
+  assert.match(restored.ids.get('selection-status').textContent, /provider-confirmed/);
+  restored.ids.get('selected-hardware').children[0].fire('click');
+  assert.deepEqual(restored.plain('getSelectedAcceleratorTypes()'), []);
+});
+
+test('a GB300 comparison cannot declare a closest provider when AWS region coverage is missing', async () => {
+  const a = await app();
+  a.run('setFamilySelection(["A4X Max", "P6e-GB300"], true)');
+  a.input('{"Amsterdam":{"lat":52.36,"lng":4.9}}');
+  assert.match(a.ids.get('results-content').innerHTML, /rankings are incomplete/);
+  assert.ok(a.run('linesLayer.layers.length') > 0);
+  a.ids.get('compare-all-btn').fire('click');
+  assert.match(a.run('document.body.innerHTML'), /Incomplete coverage/);
+  assert.doesNotMatch(a.run('document.body.innerHTML'), /winner-gcp font-bold/);
+  a.ids.get('copy-md-btn').fire('click');
+  assert.match(a.copiedMarkdown(), /Regions not verified/);
+  assert.match(a.copiedMarkdown(), /\*\*Incomplete coverage\*\*/);
+});
+
+test('family, provider, architecture and GPU-memory searches work', async () => {
+  const a = await app();
+  for (const [query, expected] of [['p6e', 'P6e-GB300'], ['aws blackwell', 'G7'], ['a100 80gb', 'A2 Ultra'], ['amd', 'NDsr MI300X v5-Series']]) {
+    a.ids.get('hardware-search').value = query;
+    assert.ok(a.plain('getFilteredFamilyEntries().map(e => e.family)').includes(expected), query);
+  }
+  a.ids.get('hardware-search').value = 'a100 80gb';
+  assert.equal(a.plain('getFilteredFamilyEntries().map(e => e.family)').includes('NDasr A100 v4-Series'), false);
+  assert.equal(a.plain('getFilteredFamilyEntries().map(e => e.family)').includes('NDamsr A100 v4-Series'), true);
+});
+
+test('family selection is exact and removable, without Cmd/Ctrl', async () => {
+  const a = await app();
+  const family = a.queryAll('.family-checkbox').find(e => e.dataset.family === 'A3 High');
+  family.checked = true; family.fire('change');
+  assert.deepEqual(a.plain('getSelectedAcceleratorTypes()'), ['A3 High']);
+  const chip = a.ids.get('selected-hardware').children[0];
+  assert.match(chip.textContent, /GCP.*A3 High.*NVIDIA H100/);
+  chip.fire('click');
+  assert.deepEqual(a.plain('getSelectedAcceleratorTypes()'), []);
+  assert.equal(family.checked, false);
+});
+
+test('search and provider changes retain selections and show out-of-scope warnings', async () => {
+  const a = await app();
+  a.run('setFamilySelection(["A3 High"], true)');
+  a.ids.get('hardware-search').value = 'B300'; a.ids.get('hardware-search').fire('input');
+  assert.deepEqual(a.plain('getSelectedAcceleratorTypes()'), ['A3 High']);
+  a.ids.get('provider-all').checked = false; a.ids.get('provider-aws').checked = true;
+  a.ids.get('provider-aws').fire('change');
+  assert.deepEqual(a.plain('getSelectedAcceleratorTypes()'), ['A3 High']);
+  assert.match(a.ids.get('selection-status').textContent, /0 active.*No mapped regions can match/);
+  a.input('{"Amsterdam":{"lat":52.36,"lng":4.9}}');
+  assert.match(a.ids.get('results-content').innerHTML, /No regions match/);
+  a.ids.get('provider-aws').checked = false; a.ids.get('provider-all').checked = true;
+  a.ids.get('provider-all').fire('change');
+  assert.match(a.ids.get('selection-status').textContent, /1 active/);
+});
+
+test('selecting a searched model preserves unrelated hidden selections', async () => {
+  const a = await app();
+  a.run('setFamilySelection(["A3 High"], true)');
+  a.ids.get('hardware-search').value = 'a100 80gb'; a.ids.get('hardware-search').fire('input');
+  const model = a.queryAll('.category-checkbox').find(e => e.dataset.category === 'A100');
+  model.checked = true; model.fire('change');
+  const selected = a.plain('getSelectedAcceleratorTypes()');
+  assert.ok(selected.includes('A3 High'));
+  assert.ok(selected.includes('A2 Ultra'));
+  assert.equal(selected.includes('A2 Standard'), false);
+  assert.equal(selected.includes('NDasr A100 v4-Series'), false);
+  model.checked = false; model.fire('change');
+  assert.deepEqual(a.plain('getSelectedAcceleratorTypes()'), ['A3 High']);
+});
+
+test('GPU browsing separates AMD/NVIDIA GPUs from ASIC/FPGA/video accelerators', async () => {
+  const a = await app();
+  a.ids.get('hardware-kind').value = 'gpu';
+  const gpu = a.plain('getFilteredFamilyEntries().map(e => e.family)');
+  assert.ok(gpu.includes('NDsr MI300X v5-Series'));
+  assert.equal(gpu.includes('Trn2'), false);
+  assert.equal(gpu.includes('F2'), false);
+  a.ids.get('hardware-kind').value = 'non-gpu';
+  const other = a.plain('getFilteredFamilyEntries().map(e => e.family)');
+  assert.ok(other.includes('Trn2')); assert.ok(other.includes('F2')); assert.ok(other.includes('VT1'));
+  assert.equal(other.includes('A4X Max'), false);
+});
+
+test('stale shared family names fail closed and can be cleared', async () => {
+  const a = await app({ search: '?gpus=Removed-Family' });
+  assert.deepEqual(a.plain('getSelectedAcceleratorTypes()'), ['Removed-Family']);
+  assert.match(a.ids.get('selection-status').textContent, /No mapped regions can match/);
+  a.input('{"Amsterdam":{"lat":52.36,"lng":4.9}}');
+  assert.match(a.ids.get('results-content').innerHTML, /No regions match/);
+  a.ids.get('clear-hardware-btn').fire('click');
+  assert.deepEqual(a.plain('getSelectedAcceleratorTypes()'), []);
+  assert.equal(new URLSearchParams(a.location.search).has('gpus'), false);
+});
+
+test('catalog schema/source errors are visible instead of silently misclassifying hardware', async () => {
+  for (const catalog of [{}, { ...snapshots['accelerator_catalog.json'], schema_version: 2 }, { ...snapshots['accelerator_catalog.json'], sources: { GCP: 'https://untrusted.example/', AWS: 'https://untrusted.example/', Azure: 'https://untrusted.example/' } }]) {
+    const a = await app({ responses: { 'accelerator_catalog.json': { ok: true, json: async () => catalog } } });
+    assert.equal(a.run('dataReady'), false);
+    assert.match(a.ids.get('data-status').textContent, /could not be loaded/);
   }
 });
